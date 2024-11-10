@@ -1,4 +1,5 @@
 # huntervsspeedrunner
+[![Release](https://img.shields.io/github/v/release/FlingoDoa/huntervsspeedrunner)](https://github.com/FlingoDoa/huntervsspeedrunner/releases)]
 A plugin project for Minecraft 
 -----------------------------------------------------------------
 Installation:
