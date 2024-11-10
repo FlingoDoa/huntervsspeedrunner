@@ -1,0 +1,22 @@
+name: huntervsspeedrunner
+version: '1.01-release'
+main: me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin
+api-version: '1.20'
+authors: [FLINGO]
+description: "Плагин для игры в Hunter VS Speedrunner"
+commands:
+  hunter:
+    description: Команда для управления игрой Hunter vs Speedrunner
+    usage: "/hunter [start|stop]"
+  start:
+    description: Начать игру
+    usage: "/hunter start"
+    permission-message: "Только операторы могут начать игру."
+  stop:
+    description: Завершить игру
+    usage: "/hunter stop"
+    permission-message: "Только операторы могут остановить игру."
+  hunterworld:
+    description: Выполнение команд для мира
+    usage: "/hunterworld"
+    permission-message: "У вас нет прав для выполнения этой команды."

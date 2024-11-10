@@ -1,0 +1,37 @@
+menu:
+  speedrunner:
+    item: LEATHER_BOOTS
+    name: "§9Speedrunner"
+    slot: 2
+  hunter:
+    item: NETHERITE_SWORD
+    name: "§4Hunter"
+    slot: 6
+  add_life:
+    item: GREEN_WOOL
+    name: "§aДобавить жизнь"
+    slot: 0
+  remove_life:
+    item: RED_WOOL
+    name: "§cУбрать жизнь"
+    slot: 8
+  start:
+    item: SPAWNER
+    name: "§eЗапустить игру"
+    slot: 4
+hunter:
+  teleportDelay: 30
+  compassgive: 120
+  compass:
+    item: COMPASS
+    name: "§cКомпас охотника"
+event:
+  worldName: "Event"
+messages:
+  speedrunner_selected: "Вы выбрали команду Спидраннера!"
+  hunter_selected: "Вы выбрали команду Охотника!"
+  add_life: "Жизни Спидраннера увеличены!"
+  remove_life: "Жизни Спидраннера уменьшены!"
+  no_lives_to_remove: "У Спидраннера нет жизней для уменьшения!"
+  hunters_win: "§cХантеры выиграли!"
+  speedrunners_win: "§9Спидраннер выиграл!"
