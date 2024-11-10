@@ -10,7 +10,8 @@ Dependencies
 -----------------------------------------------------------------
 Plugins:
 1. multiverse-core
-2. multiverse-netherportals 
+2. multiverse-netherportals
+  
 Plug-in versions must match the minecraft version.
 
 ! ! ! DISCLAIMER! ! !
