@@ -1,13 +1,12 @@
-# huntervsspeedrunner
-[![Release](https://img.shields.io/github/v/release/FlingoDoa/huntervsspeedrunner)](https://github.com/FlingoDoa/huntervsspeedrunner/releases)]
-A plugin project for Minecraft 
------------------------------------------------------------------
+# Hunter vs Speedrunner
+A plugin project for Minecraft
+
+[![Release](https://img.shields.io/github/v/release/FlingoDoa/huntervsspeedrunner)](https://github.com/FlingoDoa/huntervsspeedrunner/releases)
+
 Installation:
------------------------------------------------------------------
 Just put the files in the plugins folder on your server. <br>Keep in mind that these plugins are created for Spigot/Bukkit servers! This will not work on Vanilla Minecraft servers!!!
 -----------------------------------------------------------------
 Commands:
------------------------------------------------------------------
 /hunter - role selection
 /hunter start - start game
 /hunter stop - stop the game
@@ -19,12 +18,11 @@ Russian
 Eng (maybe...soon)
 -----------------------------------------------------------------
 Dependencies:
------------------------------------------------------------------
-Plugins:
-(https://github.com/Multiverse)
+
+Plugins (Dependency in creation through these world)
 1. multiverse-core (https://github.com/Multiverse/Multiverse-Core)
 2. multiverse-netherportals (https://github.com/Multiverse/Multiverse-NetherPortals)
-Dependency in creation through these world
+
 Plug-in versions must match the minecraft version.
 -----------------------------------------------------------------
 ! ! ! DISCLAIMER! ! !
