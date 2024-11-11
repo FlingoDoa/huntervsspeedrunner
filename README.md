@@ -26,6 +26,7 @@ Plugins (Dependency in creation through these world)
 2. multiverse-netherportals (https://github.com/Multiverse/Multiverse-NetherPortals)
  
  P.s Plug-in versions must match the minecraft version.
+Why does he depend on these plugins, well.... I was just too lazy to make my own working world creation. YEP
 -----------------------------------------------------------------
 <h1 align="center">! ! ! DISCLAIMER! ! !</h1>
 I am not responsible for any damage caused to your server, loss of items or anything else that may have happened!
