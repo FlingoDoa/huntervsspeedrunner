@@ -20,12 +20,12 @@ public class SpawnTask extends BukkitRunnable {
     public void run() {
         if (speedrunner != null && speedrunner.isOnline()) {
             Location location = speedrunner.getLocation();
-            // Получаем мир, где находится спидраннер
+            // We get the world where the speedrunner is located
             World world = speedrunner.getWorld();
-            // Устанавливаем спавн в этом мире
-            world.setSpawnLocation(location);  // Устанавливаем спавн на местоположение спидраннера в его мире
+            // Setspawn this world
+            world.setSpawnLocation(location);  // Set spawn to the speedrunner's location in his world
         } else {
-            Bukkit.getLogger().warning("Спидраннер не онлайн или не существует!");
+            Bukkit.getLogger().warning("Speedrunner isn't online or doesn't exist!");
         }
     }
 }

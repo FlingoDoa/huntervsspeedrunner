@@ -1,37 +1,38 @@
 menu:
   speedrunner:
-    item: LEATHER_BOOTS
-    name: "§9Speedrunner"
-    slot: 2
+    item: LEATHER_BOOTS # Item to be placed in the menu (decoration)
+    name: "§9Speedrunner" # The title of this course
+    slot: 2 # The place where he lies is 0 to 8 (I recommend not putting in the same slots)
   hunter:
     item: NETHERITE_SWORD
     name: "§4Hunter"
     slot: 6
   add_life:
     item: GREEN_WOOL
-    name: "§aДобавить жизнь"
+    name: "§aAdd Life"
     slot: 0
   remove_life:
     item: RED_WOOL
-    name: "§cУбрать жизнь"
+    name: "§cRemove Life"
     slot: 8
   start:
     item: SPAWNER
-    name: "§eЗапустить игру"
+    name: "§eStart Game"
     slot: 4
 hunter:
-  teleportDelay: 30
-  compassgive: 120
+  teleportDelay: 30 # Haneterov's teleportation delay
+  compassgive: 120 # How long before the compass is issued
+  giveCompassOnDeath: true #  Will the compass be retrieved after the death of the hunter
   compass:
-    item: COMPASS
-    name: "§cКомпас охотника"
+    item: COMPASS # DON'T CHANGE THAT ARGUMENT
+    name: "§cHunter's Compass" # The name of the compass for the Hunter
 event:
-  worldName: "Event"
+  worldName: "Event" # The name of the world where the event will be held (I recommend not changing the setting)
 messages:
-  speedrunner_selected: "Вы выбрали команду Спидраннера!"
-  hunter_selected: "Вы выбрали команду Охотника!"
-  add_life: "Жизни Спидраннера увеличены!"
-  remove_life: "Жизни Спидраннера уменьшены!"
-  no_lives_to_remove: "У Спидраннера нет жизней для уменьшения!"
-  hunters_win: "§cХантеры выиграли!"
-  speedrunners_win: "§9Спидраннер выиграл!"
+  speedrunner_selected: "You have selected the Speedrunner team!"
+  hunter_selected: "You have selected the Hunter team!"
+  add_life: "Speedrunner's lives have been increased!"
+  remove_life: "Speedrunner's lives have been decreased!"
+  no_lives_to_remove: "The Speedrunner has no lives left to remove!"
+  hunters_win: "§cHunters won!"
+  speedrunners_win: "§9Speedrunner won!"

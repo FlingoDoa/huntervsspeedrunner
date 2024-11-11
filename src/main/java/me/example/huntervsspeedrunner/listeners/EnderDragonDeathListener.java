@@ -22,18 +22,18 @@ public class EnderDragonDeathListener implements Listener {
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
         if (event.getEntityType() == EntityType.ENDER_DRAGON) {
-            // Сообщение о победе спидраннеров
+            // Speedrunner victory message
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                    "title @a title {\"text\":\"Спидраннеры выиграли\", \"color\":\"#00FF00\"}");
+                    "title @a title {\"text\":\"Speedrunners Win\", \"color\":\"#00FF00\"}");
 
-            // Перевод всех игроков в режим наблюдателя и очистка инвентаря
+            // Set all players to spectator mode and clear inventories
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.getInventory().clear();
             }
 
-            // Завершение игры
-            plugin.getGameManager().endGame(); // Метод завершения игры
+            // End the game
+            plugin.getGameManager().endGame(); // Method to end the game
         }
     }
 }

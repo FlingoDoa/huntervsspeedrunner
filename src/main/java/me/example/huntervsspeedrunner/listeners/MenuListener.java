@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent; // Добавьте этот импорт
+import org.bukkit.event.inventory.InventoryCloseEvent; // Add this import
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -23,9 +23,9 @@ public class MenuListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        // Проверяем, открыто ли меню
+        // Check if the menu is open
         if (!plugin.isMenuOpen()) {
-            return;  // Если меню не открыто, ничего не делаем
+            return;  // If the menu is not open, do nothing
         }
 
         ItemStack clickedItem = event.getCurrentItem();
@@ -42,46 +42,46 @@ public class MenuListener implements Listener {
 
         if (displayName.equals("§9Speedrunner")) {
             lifeManager.setSpeedrunner(player);
-            player.sendMessage("Вы стали спидраннером!");
+            player.sendMessage("You are now a speedrunner!");
         } else if (displayName.equals("§4Hunter")) {
             lifeManager.setHunter(player);
-            player.sendMessage("Вы стали охотником!");
-        } else if (displayName.equals("§aДобавить жизнь")) {
+            player.sendMessage("You are now a hunter!");
+        } else if (displayName.equals("§aAdd Life")) {
             if (lifeManager.isSpeedrunner(player)) {
-                lifeManager.addLife(player); // Добавляем жизнь спидраннеру
+                lifeManager.addLife(player); // Add life to the speedrunner
             } else {
-                player.sendMessage(ChatColor.RED + "Только спидраннеры могут добавлять себе жизни!");
+                player.sendMessage(ChatColor.RED + "Only speedrunners can add lives!");
             }
-        } else if (displayName.equals("§cУбрать жизнь")) {
+        } else if (displayName.equals("§cRemove Life")) {
             if (lifeManager.isSpeedrunner(player)) {
-                lifeManager.removeLife(player); // Уменьшаем жизнь спидраннеру
+                lifeManager.removeLife(player); // Remove life from the speedrunner
             } else {
-                player.sendMessage(ChatColor.RED + "Только спидраннеры могут уменьшать свои жизни!");
+                player.sendMessage(ChatColor.RED + "Only speedrunners can remove lives!");
             }
-        } else if (displayName.equals("§eЗапустить игру")) {
+        } else if (displayName.equals("§eStart Game")) {
             if (player.isOp()) {
                 if (GameManager.canStartGame(plugin)) {
                     Bukkit.getServer().getLogger().info("Attempting to start the game!");
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunter start");
                 } else {
-                    player.sendMessage(ChatColor.RED + "Не хватает игроков для старта игры!");
+                    player.sendMessage(ChatColor.RED + "Not enough players to start the game!");
                 }
             } else {
-                player.sendMessage(ChatColor.RED + "ДОСТУПНО ТОЛЬКО ОПЕРАТОРУ!");
+                player.sendMessage(ChatColor.RED + "AVAILABLE TO OPERATORS ONLY!");
             }
         }
 
-        event.setCancelled(true);  // Останавливаем дальнейшие действия
+        event.setCancelled(true);  // Prevent further actions
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        // Проверяем, был ли закрыт инвентарь, который относится к нашему меню
+        // Check if the closed inventory is related to our menu
         Player player = (Player) event.getPlayer();
         if (plugin.isMenuOpen()) {
-            // Если меню было открыто и игрок его закрыл, сбрасываем флаг
+            // If the menu was open and the player closed it, reset the flag
             plugin.setMenuOpen(false);
-            player.sendMessage("Меню закрыто!");
+            player.sendMessage("Menu closed!");
         }
     }
 }

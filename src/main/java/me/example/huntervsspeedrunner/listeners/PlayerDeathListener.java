@@ -2,6 +2,7 @@ package me.example.huntervsspeedrunner.listeners;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import me.example.huntervsspeedrunner.utils.LifeManager;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -26,45 +27,41 @@ public class PlayerDeathListener implements Listener {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
+        FileConfiguration config = plugin.getConfig(); // Получаем конфигурацию
 
-        if (lifeManager.isHunter(player)) {
-            // Задержка на выдачу компаса в 10 секунд после смерти хантера
+        if (lifeManager.isHunter(player) && config.getBoolean("hunter.giveCompassOnDeath", true)) {
+
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     ItemStack compass = new ItemStack(Material.COMPASS);
                     player.getInventory().addItem(compass);
-                    player.sendMessage(ChatColor.GREEN + "Вам выдан компас после 10 секунд.");
+                    player.sendMessage(ChatColor.GREEN + "You received a compass after 10 seconds.");
                 }
             }.runTaskLater(plugin, 20L * 10); // 10 секунд (20 тиков * 10)
         }
 
-        if (lifeManager.isHunter(player)) {
-            ItemStack compass = new ItemStack(Material.COMPASS);
-            player.getInventory().addItem(compass);
-        }
 
-        // Если погиб спидраннер
         if (lifeManager.isSpeedrunner(player)) {
             lifeManager.removeLife(player);
 
-            // Проверка оставшихся жизней спидраннера
+
             if (lifeManager.getPlayerLives(player) <= 0) {
                 player.setGameMode(GameMode.SPECTATOR);
-                player.sendMessage(ChatColor.RED + "У вас закончились жизни! Вы переведены в режим наблюдателя.");
+                player.sendMessage(ChatColor.RED + "You are out of lives! You have been set to spectator mode.");
             }
 
-            // Проверка суммарных жизней всех спидраннеров
+
             if (lifeManager.getTotalSpeedrunnerLives() <= 0) {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        "title @a title {\"text\":\"Хантеры выиграли\", \"color\":\"#C90000\"}");
+                        "title @a title {\"text\":\"Hunters Win\", \"color\":\"#C90000\"}");
 
-                // Очистка инвентарей и перевод в наблюдатели
+
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     p.setGameMode(GameMode.SPECTATOR);
                     p.getInventory().clear();
                 }
-                plugin.getGameManager().endGame(); // Завершение игры
+                plugin.getGameManager().endGame();
             }
         }
     }

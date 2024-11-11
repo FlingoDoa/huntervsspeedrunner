@@ -18,7 +18,7 @@ public class LifeManager {
     private Team hunters;
     private Team speedrunners;
 
-    // Хранение жизней для каждого спидраннера
+    // Store lives for each speedrunner
     private final Map<String, Integer> playerLives = new HashMap<>();
 
     public LifeManager(HunterVSSpeedrunnerPlugin plugin) {
@@ -26,63 +26,63 @@ public class LifeManager {
         ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
         this.scoreboard = scoreboardManager.getMainScoreboard();
 
-
         if (scoreboard.getTeam("speedrunners") == null) {
             speedrunners = scoreboard.registerNewTeam("speedrunners");
-            speedrunners.setDisplayName(ChatColor.GREEN + "Спидраннеры");
+            speedrunners.setDisplayName(ChatColor.GREEN + "Speedrunners");
         } else {
             speedrunners = scoreboard.getTeam("speedrunners");
         }
 
         if (scoreboard.getTeam("hunters") == null) {
             hunters = scoreboard.registerNewTeam("hunters");
-            hunters.setDisplayName(ChatColor.RED + "Охотники");
+            hunters.setDisplayName(ChatColor.RED + "Hunters");
         } else {
             hunters = scoreboard.getTeam("hunters");
         }
 
         Objective objective = scoreboard.getObjective("dummy");
         if (objective == null) {
-            objective = scoreboard.registerNewObjective("dummy", "dummy", ChatColor.YELLOW + "Жизни");
+            objective = scoreboard.registerNewObjective("dummy", "dummy", ChatColor.YELLOW + "Lives");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         }
 
         initializeScoreboard();
     }
+
     public int getPlayerLives(Player player) {
         return playerLives.getOrDefault(player.getName(), 0);
     }
 
-    // Метод для подсчета суммарных жизней всех спидраннеров
+    // Method to calculate total lives of all speedrunners
     public int getTotalSpeedrunnerLives() {
         return playerLives.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    // Инициализация scoreboard для всех игроков
+    // Initialize scoreboard for all players
     public void initializeScoreboard() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.setScoreboard(scoreboard);
         }
     }
 
-    // Обновление отображения жизней на scoreboard
+    // Update display of lives on the scoreboard
     public void updateScoreboard() {
         Objective objective = scoreboard.getObjective("dummy");
 
-        // Сброс текущих записей
+        // Reset current entries
         for (String entry : scoreboard.getEntries()) {
             scoreboard.resetScores(entry);
         }
 
-        // Обновление жизней для каждого спидраннера
+        // Update lives for each speedrunner
         for (Map.Entry<String, Integer> entry : playerLives.entrySet()) {
             String playerName = entry.getKey();
             int lives = entry.getValue();
-            objective.getScore(ChatColor.AQUA + playerName + ": " ).setScore(lives);
+            objective.getScore(ChatColor.AQUA + playerName + ": ").setScore(lives);
         }
     }
 
-    // Добавление игрока в команду Охотников
+    // Add player to Hunters team
     public void setHunter(Player player) {
         speedrunners.removeEntry(player.getName());
         hunters.addEntry(player.getName());
@@ -90,7 +90,7 @@ public class LifeManager {
         updateScoreboard();
     }
 
-    // Добавление игрока в команду Спидраннеров с дефолтным количеством жизней (1)
+    // Add player to Speedrunners team with default lives (1)
     public void setSpeedrunner(Player player) {
         hunters.removeEntry(player.getName());
         speedrunners.addEntry(player.getName());
@@ -98,47 +98,47 @@ public class LifeManager {
         updateScoreboard();
     }
 
-    // Проверка, является ли игрок Спидраннером
+    // Check if player is a Speedrunner
     public boolean isSpeedrunner(Player player) {
         return speedrunners.hasEntry(player.getName());
     }
 
-    // Проверка, является ли игрок Охотником
+    // Check if player is a Hunter
     public boolean isHunter(Player player) {
         return hunters.hasEntry(player.getName());
     }
 
-    // Добавить жизнь спидраннеру
+    // Add a life to a speedrunner
     public void addLife(Player player) {
         if (isSpeedrunner(player)) {
             int lives = playerLives.getOrDefault(player.getName(), 1) + 1;
             playerLives.put(player.getName(), lives);
-            player.sendMessage(ChatColor.GREEN + "Вам добавлена жизнь! Текущие жизни: " + lives);
+            player.sendMessage(ChatColor.GREEN + "A life has been added! Current lives: " + lives);
             updateScoreboard();
         }
     }
 
-    // Уменьшить жизнь спидраннеру
+    // Remove a life from a speedrunner
     public void removeLife(Player player) {
         if (isSpeedrunner(player)) {
             int lives = playerLives.getOrDefault(player.getName(), 1) - 1;
             if (lives <= 0) {
-                player.sendMessage(ChatColor.RED + "Ваши жизни закончились!");
+                player.sendMessage(ChatColor.RED + "You have run out of lives!");
                 playerLives.remove(player.getName());
             } else {
                 playerLives.put(player.getName(), lives);
-                player.sendMessage(ChatColor.RED + "Ваша жизнь уменьшена! Текущие жизни: " + lives);
+                player.sendMessage(ChatColor.RED + "A life has been removed! Current lives: " + lives);
             }
             updateScoreboard();
         }
     }
 
-    // Получить список охотников
+    // Get list of Hunters
     public List<String> getHunters() {
         return new ArrayList<>(hunters.getEntries());
     }
 
-    // Получить список спидраннеров
+    // Get list of Speedrunners
     public List<String> getSpeedrunners() {
         return new ArrayList<>(speedrunners.getEntries());
     }

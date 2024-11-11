@@ -16,7 +16,6 @@ import org.bukkit.Location;
 public class GameManager {
 
     private static boolean gameStarted = false;
-    private static String eventWorldName = "Event";
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
         if (gameStarted) {
@@ -25,12 +24,12 @@ public class GameManager {
 
         gameStarted = true;
         plugin.getLifeManager().initializeScoreboard();
-        Bukkit.getLogger().info("Игра начинается...");
+        Bukkit.getLogger().info("Game is starting...");
 
         startCompassCountdown(plugin);
-        Bukkit.getLogger().info("Запущен отсчет для компаса.");
+        Bukkit.getLogger().info("Compass countdown started.");
 
-        Bukkit.broadcastMessage("§aИгра началась!");
+        Bukkit.broadcastMessage("§aThe game has started!");
 
         clearAchievements();
 
@@ -47,12 +46,12 @@ public class GameManager {
 
     public static void openTeamSelectionMenu(Player player, HunterVSSpeedrunnerPlugin plugin) {
         if (gameStarted) {
-            player.sendMessage("§cИгра уже началась! Невозможно изменить команду.");
+            player.sendMessage("§cThe game has already started! Unable to change team.");
             return;
         }
 
         FileConfiguration config = plugin.getConfig();
-        Inventory inventory = Bukkit.createInventory(null, 9, "Выберите команду");
+        Inventory inventory = Bukkit.createInventory(null, 9, "Select a Team");
 
         ItemStack hunterItem = createMenuItem(config, "menu.hunter");
         ItemStack speedrunnerItem = createMenuItem(config, "menu.speedrunner");
@@ -87,7 +86,7 @@ public class GameManager {
 
     private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
         int compassDelaySeconds = plugin.getConfig().getInt("hunter.compassgive");
-        Bukkit.getLogger().info("Время до выдачи компаса: " + compassDelaySeconds + " секунд.");
+        Bukkit.getLogger().info("Time until compass is given: " + compassDelaySeconds + " seconds.");
 
         new BukkitRunnable() {
             int countdown = compassDelaySeconds;
@@ -111,23 +110,23 @@ public class GameManager {
         int seconds = countdown % 60;
 
         String timeMessage = (minutes > 0) ?
-                "До выдачи компаса хантерам: " + minutes + " минут" + (minutes >= 2 ? "ы" : "") + " и " + seconds + " секунд" :
-                "До выдачи компаса хантерам: " + seconds + " секунд.";
+                "Time until compass is given to hunters: " + minutes + " minute" + (minutes >= 2 ? "s" : "") + " and " + seconds + " seconds" :
+                "Time until compass is given to hunters: " + seconds + " seconds.";
 
         Bukkit.broadcastMessage("§a" + timeMessage);
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
-        Bukkit.getLogger().info("Выдача компасов хантерам.");
+        Bukkit.getLogger().info("Giving compasses to hunters.");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (plugin.getLifeManager().isHunter(player)) {
-                // Проверяем, нет ли уже у игрока компаса
+                // Check if player already has a compass
                 boolean hasCompass = player.getInventory().contains(Material.COMPASS);
                 if (!hasCompass) {
                     ItemStack compass = new ItemStack(Material.COMPASS);
                     ItemMeta meta = compass.getItemMeta();
                     if (meta != null) {
-                        meta.setDisplayName("§cОхотничий компас");
+                        meta.setDisplayName("§cHunter's Compass");
                         compass.setItemMeta(meta);
                     }
                     player.getInventory().addItem(compass);
@@ -136,16 +135,15 @@ public class GameManager {
         }
     }
 
-
     private static void teleportSpeedrunners(HunterVSSpeedrunnerPlugin plugin) {
-        Bukkit.getLogger().info("Телепортация спидраннеров.");
+        Bukkit.getLogger().info("Teleporting speedrunners.");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "clear @a");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "time set day");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "effect give @a minecraft:saturation 10 255");
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.getLifeManager().isSpeedrunner(player)) {
-                    teleportToEventWorld(player);
+                    teleportToEventWorld(player, plugin);
                     new SpawnTask(plugin, player).runTaskTimer(plugin, 0L, 20L * 5);
                 }
             }
@@ -154,62 +152,64 @@ public class GameManager {
 
     private static void teleportHuntersDelayed(HunterVSSpeedrunnerPlugin plugin) {
         int teleportDelay = plugin.getConfig().getInt("hunter.teleportDelay");
-        Bukkit.getLogger().info("Задержка телепортации охотников: " + teleportDelay + " секунд.");
+        Bukkit.getLogger().info("Hunter teleport delay: " + teleportDelay + " seconds.");
         new BukkitRunnable() {
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (plugin.getLifeManager().isHunter(player)) {
-                        teleportToEventWorld(player);
+                        teleportToEventWorld(player, plugin);
                     }
                 }
             }
         }.runTaskLater(plugin, 20L * teleportDelay);
     }
 
-    private static void teleportToEventWorld(Player player) {
-        FileConfiguration config = player.getServer().getPluginManager().getPlugin("HunterVSSpeedrunner").getConfig();
+    private static void teleportToEventWorld(Player player, HunterVSSpeedrunnerPlugin plugin) {
+        FileConfiguration config = plugin.getConfig();
         String eventWorldName = config.getString("event.worldName");
         if (Bukkit.getWorld(eventWorldName) != null) {
             World eventWorld = Bukkit.getWorld(eventWorldName);
 
-            // Находим самую высокую точку земли на (0, 0) и добавляем два блока к высоте
+            // Find the highest ground point at (0, 0) and add two blocks to the height
             int groundY = eventWorld.getHighestBlockYAt(0, 0);
             int teleportY = groundY + 2;
 
             Location teleportLocation = new Location(eventWorld, 0, teleportY, 0);
             player.teleport(teleportLocation);
-            player.sendMessage("§aВы были телепортированы в мир события на координаты (0, " + teleportY + ", 0)!");
+            player.sendMessage("§aYou have been teleported to the event world at coordinates (0, " + teleportY + ", 0)!");
         } else {
-            player.sendMessage("§cМир события не найден!");
+            player.sendMessage("§cEvent world not found! use /hunterworld to create  ");
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "reload confirm");
+            player.sendMessage("§cPlugins reload all!");
         }
     }
 
     private static void clearAchievements() {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
-        Bukkit.broadcastMessage("§cВсе достижения были сброшены у всех игроков.");
+        Bukkit.broadcastMessage("§cAll achievements have been reset for all players.");
     }
 
     public static void endGame() {
         gameStarted = false;
-        Bukkit.getLogger().info("Игра завершена.");
+        Bukkit.getLogger().info("Game has ended.");
 
         HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
 
         if (plugin == null) {
-            Bukkit.getLogger().warning("Плагин HunterVSSpeedrunner не найден!");
+            Bukkit.getLogger().warning("HunterVSSpeedrunner plugin not found!");
             return;
         }
 
         LifeManager lifeManager = plugin.getLifeManager();
 
         if (lifeManager.getSpeedrunners().isEmpty()) {
-            Bukkit.broadcastMessage("§cОхотники победили!");
+            Bukkit.broadcastMessage("§cHunters win!");
         } else {
-            Bukkit.broadcastMessage("§aСпидраннеры победили!");
+            Bukkit.broadcastMessage("§aSpeedrunners win!");
         }
 
-        Bukkit.broadcastMessage("§cИгра завершена.");
+        Bukkit.broadcastMessage("§cThe game has ended.");
     }
 
     public static boolean isGameStarted() {

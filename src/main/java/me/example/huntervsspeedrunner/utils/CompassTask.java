@@ -10,45 +10,45 @@ public class CompassTask extends BukkitRunnable {
     private final Player hunter;
     private Player target;
 
-    // Конструктор для логирования
+    // Constructor for logging
     public CompassTask(Player hunter, Player target) {
         this.hunter = hunter;
         this.target = target;
-        Bukkit.getLogger().info("Создана задача для отслеживания спидраннера: " + (target != null ? target.getName() : "неизвестен"));
+        Bukkit.getLogger().info("Tracking task created for speedrunner: " + (target != null ? target.getName() : "unknown"));
     }
 
     @Override
     public void run() {
-        // Логируем, что задача запустилась
-        Bukkit.getLogger().info("Запуск задачи отслеживания спидраннера.");
+        // Log that the task has started
+        Bukkit.getLogger().info("Starting speedrunner tracking task.");
 
-        // Проверяем, что цель существует и онлайн
+        // Check if the target exists and is online
         if (target != null && target.isOnline()) {
-            // Получаем мир спидраннера
+            // Get the speedrunner's world
             World world = target.getWorld();
 
-            // Логируем текущие координаты спидраннера
-            Bukkit.getLogger().info("Обновление спавна на координатах спидраннера: " + target.getLocation().toString());
+            // Log current coordinates of the speedrunner
+            Bukkit.getLogger().info("Updating spawn to speedrunner's coordinates: " + target.getLocation().toString());
 
-            // Устанавливаем глобальный спавн мира на позицию спидраннера
+            // Set the global world spawn to the speedrunner's position
             world.setSpawnLocation(target.getLocation());
 
-            // Логируем установку глобального спавна
-            Bukkit.getLogger().info("Глобальный спавн мира " + world.getName() + " обновлен на координаты: " + target.getLocation().toString());
+            // Log the global spawn update
+            Bukkit.getLogger().info("Global spawn for world " + world.getName() + " updated to coordinates: " + target.getLocation().toString());
 
-            // Устанавливаем личный спавн для всех игроков
+            // Set personal spawn for all players
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.setBedSpawnLocation(target.getLocation(), true);
 
-                // Логируем установку персонального спавна для каждого игрока
-                Bukkit.getLogger().info("Персональный спавн игрока " + player.getName() + " обновлен на координаты спидраннера: " + target.getLocation().toString());
+                // Log personal spawn update for each player
+                Bukkit.getLogger().info("Personal spawn for player " + player.getName() + " updated to speedrunner's coordinates: " + target.getLocation().toString());
             }
 
-            // Дополнительно: выводим сообщение в консоль о том, что задача была выполнена
-            Bukkit.getLogger().info("Задача по обновлению спавна для всех игроков завершена.");
+            // Additional log to indicate task completion
+            Bukkit.getLogger().info("Spawn update task for all players completed.");
         } else {
-            // Если цель не онлайн, выводим предупреждение в консоль
-            Bukkit.getLogger().warning("Спидраннер " + (target != null ? target.getName() : "неизвестен") + " не онлайн. Спавн не обновлен.");
+            // If the target is not online, log a warning
+            Bukkit.getLogger().warning("Speedrunner " + (target != null ? target.getName() : "unknown") + " is not online. Spawn not updated.");
         }
     }
 
@@ -56,9 +56,9 @@ public class CompassTask extends BukkitRunnable {
         this.target = target;
     }
 
-    // Статический метод для запуска задачи
+    // Static method to start the task
     public static void startTracking(Player hunter, Player target) {
-        Bukkit.getLogger().info("Запуск задачи для отслеживания спидраннера...");
-        new CompassTask(hunter, target).runTaskTimer(Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner"), 0L, 100L); // 100 тиков = 5 секунд
+        Bukkit.getLogger().info("Starting tracking task for speedrunner...");
+        new CompassTask(hunter, target).runTaskTimer(Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner"), 0L, 100L); // 100 ticks = 5 seconds
     }
 }

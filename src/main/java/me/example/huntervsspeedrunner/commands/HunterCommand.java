@@ -18,46 +18,46 @@ public class HunterCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Проверка, что команду выполняет игрок
+        // Check if the command is run by a player
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cКоманду может выполнить только игрок.");
+            sender.sendMessage("§cOnly players can execute this command.");
             return false;
         }
         Player player = (Player) sender;
 
-        // Обработка команды без аргументов - открытие меню выбора команды
+        // Handle command with no arguments - open team selection menu
         if (args.length == 0) {
             GameManager.openTeamSelectionMenu(player, plugin);
         }
-        // Обработка команды start - запуск игры
+        // Handle "start" command - start the game
         else if (args[0].equalsIgnoreCase("start")) {
             if (GameManager.isGameStarted()) {
-                player.sendMessage("§cИгра уже началась.");
+                player.sendMessage("§cThe game has already started.");
                 return false;
             }
             if (GameManager.canStartGame(plugin)) {
                 GameManager.startGame(plugin);
-                player.sendMessage("§aИгра началась!");
+                player.sendMessage("§aThe game has started!");
             } else {
-                player.sendMessage("§cНевозможно начать игру. Убедитесь, что есть игроки в обеих командах.");
+                player.sendMessage("§cUnable to start the game. Ensure there are players in both teams.");
             }
         }
-        // Обработка команды stop - завершение игры
+        // Handle "stop" command - end the game
         else if (args[0].equalsIgnoreCase("stop")) {
-            if (!player.hasPermission("hunter.stop")) {  // Проверка прав игрока
-                player.sendMessage("§cУ вас нет прав для выполнения этой команды.");
+            if (!player.hasPermission("hunter.stop")) {  // Check player permissions
+                player.sendMessage("§cYou do not have permission to execute this command.");
                 return false;
             }
             if (GameManager.isGameStarted()) {
-                GameManager.endGame();  // Завершаем игру
-                Bukkit.broadcastMessage("§cИгра была завершена.");
+                GameManager.endGame();  // End the game
+                Bukkit.broadcastMessage("§cThe game has been stopped.");
                 org.bukkit.World world = Bukkit.getWorld("world");
 
             } else {
-                player.sendMessage("§cИгра еще не началась.");
+                player.sendMessage("§cThe game has not started yet.");
             }
         } else {
-            return false;  // Если команда не распознана
+            return false;  // Command not recognized
         }
 
         return true;
