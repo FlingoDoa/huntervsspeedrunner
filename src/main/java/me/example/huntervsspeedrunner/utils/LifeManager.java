@@ -5,7 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
-
+import org.bukkit.configuration.file.FileConfiguration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -110,24 +110,30 @@ public class LifeManager {
 
     // Add a life to a speedrunner
     public void addLife(Player player) {
+        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
         if (isSpeedrunner(player)) {
             int lives = playerLives.getOrDefault(player.getName(), 1) + 1;
             playerLives.put(player.getName(), lives);
-            player.sendMessage(ChatColor.GREEN + "A life has been added! Current lives: " + lives);
+            player.sendMessage(ChatColor.GREEN + config.getString(language + ".messages.live_add") +" "+ lives);
             updateScoreboard();
         }
     }
 
     // Remove a life from a speedrunner
     public void removeLife(Player player) {
+        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
         if (isSpeedrunner(player)) {
             int lives = playerLives.getOrDefault(player.getName(), 1) - 1;
             if (lives <= 0) {
-                player.sendMessage(ChatColor.RED + "You have run out of lives!");
+                player.sendMessage(ChatColor.RED + config.getString(language + ".messages.live_null"));
                 playerLives.remove(player.getName());
             } else {
                 playerLives.put(player.getName(), lives);
-                player.sendMessage(ChatColor.RED + "A life has been removed! Current lives: " + lives);
+                player.sendMessage(ChatColor.RED + config.getString(language + ".messages.live_remove") +" "+  lives);
             }
             updateScoreboard();
         }

@@ -2,6 +2,7 @@ package me.example.huntervsspeedrunner.utils;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.Location;
@@ -18,6 +19,9 @@ public class SpawnTask extends BukkitRunnable {
 
     @Override
     public void run() {
+        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
         if (speedrunner != null && speedrunner.isOnline()) {
             Location location = speedrunner.getLocation();
             // We get the world where the speedrunner is located
@@ -25,7 +29,7 @@ public class SpawnTask extends BukkitRunnable {
             // Setspawn this world
             world.setSpawnLocation(location);  // Set spawn to the speedrunner's location in his world
         } else {
-            Bukkit.getLogger().warning("Speedrunner isn't online or doesn't exist!");
+            Bukkit.getLogger().warning(config.getString(language + "messages.online"));
         }
     }
 }

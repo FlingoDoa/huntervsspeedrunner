@@ -28,34 +28,35 @@ public class PlayerDeathListener implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         FileConfiguration config = plugin.getConfig(); // Получаем конфигурацию
+        String language = config.getString("language");
+        String path = language + ".messages.";
 
+        // Если игрок - охотник и включено получение компаса после смерти
         if (lifeManager.isHunter(player) && config.getBoolean("hunter.giveCompassOnDeath", true)) {
-
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     ItemStack compass = new ItemStack(Material.COMPASS);
                     player.getInventory().addItem(compass);
-                    player.sendMessage(ChatColor.GREEN + "You received a compass after 10 seconds.");
+                    player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
                 }
-            }.runTaskLater(plugin, 20L * 10); // 10 секунд (20 тиков * 10)
+            }.runTaskLater(plugin, 20L * 10); // Задержка в 10 секунд (20 тиков * 10)
         }
 
-
+        // Если игрок - спидраннер, уменьшаем количество жизней
         if (lifeManager.isSpeedrunner(player)) {
             lifeManager.removeLife(player);
 
-
+            // Если жизней больше нет, игрок становится наблюдателем
             if (lifeManager.getPlayerLives(player) <= 0) {
                 player.setGameMode(GameMode.SPECTATOR);
-                player.sendMessage(ChatColor.RED + "You are out of lives! You have been set to spectator mode.");
+                player.sendMessage(ChatColor.RED + config.getString(path + "out_of_lives"));
             }
 
-
+            // Если у всех спидраннеров закончились жизни, игра заканчивается
             if (lifeManager.getTotalSpeedrunnerLives() <= 0) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        "title @a title {\"text\":\"Hunters Win\", \"color\":\"#C90000\"}");
-
+                String titleCommand = String.format("title @a title {\"text\":\"%s\", \"color\":\"#C90000\"}", config.getString(path + "hunters_win"));
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), titleCommand);
 
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     p.setGameMode(GameMode.SPECTATOR);

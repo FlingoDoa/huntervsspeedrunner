@@ -3,13 +3,14 @@ package me.example.huntervsspeedrunner.listeners;
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import me.example.huntervsspeedrunner.utils.GameManager;
 import me.example.huntervsspeedrunner.utils.LifeManager;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent; // Add this import
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -23,9 +24,9 @@ public class MenuListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        // Check if the menu is open
+        // Проверка, открыт ли меню
         if (!plugin.isMenuOpen()) {
-            return;  // If the menu is not open, do nothing
+            return;
         }
 
         ItemStack clickedItem = event.getCurrentItem();
@@ -39,49 +40,53 @@ public class MenuListener implements Listener {
         String displayName = meta.getDisplayName();
 
         LifeManager lifeManager = plugin.getLifeManager();
+        FileConfiguration config = plugin.getConfig();
 
-        if (displayName.equals("§9Speedrunner")) {
+        // Извлечение языка и подготовка пути к сообщениям
+        String language = config.getString("language");
+        String path = language + ".messages.";
+
+        // Проверка и обработка выбора игрока
+        if (displayName.equals(config.getString(language + ".menu.speedrunner.name"))) {
             lifeManager.setSpeedrunner(player);
-            player.sendMessage("You are now a speedrunner!");
-        } else if (displayName.equals("§4Hunter")) {
+            player.sendMessage(config.getString(path + "selected_speedrunner"));
+        } else if (displayName.equals(config.getString(language + ".menu.hunter.name"))) {
             lifeManager.setHunter(player);
-            player.sendMessage("You are now a hunter!");
-        } else if (displayName.equals("§aAdd Life")) {
+            player.sendMessage(config.getString(path + "selected_hunter"));
+        } else if (displayName.equals(config.getString(language + ".menu.add_life.name"))) {
             if (lifeManager.isSpeedrunner(player)) {
-                lifeManager.addLife(player); // Add life to the speedrunner
+                lifeManager.addLife(player);
             } else {
-                player.sendMessage(ChatColor.RED + "Only speedrunners can add lives!");
+                player.sendMessage(ChatColor.RED + config.getString(path + "only_speedrunner_can_add_life"));
             }
-        } else if (displayName.equals("§cRemove Life")) {
+        } else if (displayName.equals(config.getString(language + ".menu.remove_life.name"))) {
             if (lifeManager.isSpeedrunner(player)) {
-                lifeManager.removeLife(player); // Remove life from the speedrunner
+                lifeManager.removeLife(player);
             } else {
-                player.sendMessage(ChatColor.RED + "Only speedrunners can remove lives!");
+                player.sendMessage(ChatColor.RED + config.getString(path + "only_speedrunner_can_remove_life"));
             }
-        } else if (displayName.equals("§eStart Game")) {
+        } else if (displayName.equals(config.getString(language + ".menu.start.name"))) {
             if (player.isOp()) {
                 if (GameManager.canStartGame(plugin)) {
                     Bukkit.getServer().getLogger().info("Attempting to start the game!");
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunter start");
                 } else {
-                    player.sendMessage(ChatColor.RED + "Not enough players to start the game!");
+                    player.sendMessage(ChatColor.RED + config.getString(path + "not_enough_players"));
                 }
             } else {
-                player.sendMessage(ChatColor.RED + "AVAILABLE TO OPERATORS ONLY!");
+                player.sendMessage(ChatColor.RED + config.getString(path + "start_game_op_only"));
             }
         }
 
-        event.setCancelled(true);  // Prevent further actions
+        event.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        // Check if the closed inventory is related to our menu
         Player player = (Player) event.getPlayer();
         if (plugin.isMenuOpen()) {
-            // If the menu was open and the player closed it, reset the flag
             plugin.setMenuOpen(false);
-            player.sendMessage("Menu closed!");
+            player.sendMessage(plugin.getConfig().getString(plugin.getConfig().getString("language") + ".messages.menu_closed"));
         }
     }
 }

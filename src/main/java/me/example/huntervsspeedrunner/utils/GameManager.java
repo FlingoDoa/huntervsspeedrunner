@@ -2,22 +2,25 @@ package me.example.huntervsspeedrunner.utils;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.Location;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.World;
-import org.bukkit.Location;
+import org.bukkit.scheduler.BukkitTask;
 
 public class GameManager {
 
     private static boolean gameStarted = false;
+    private static BukkitTask compassCountdownTask;  // Храним задачу таймера компаса
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
         if (gameStarted) {
             return;
         }
@@ -26,10 +29,10 @@ public class GameManager {
         plugin.getLifeManager().initializeScoreboard();
         Bukkit.getLogger().info("Game is starting...");
 
-        startCompassCountdown(plugin);
+        startCompassCountdown(plugin);  // Запуск отсчета компаса
         Bukkit.getLogger().info("Compass countdown started.");
 
-        Bukkit.broadcastMessage("§aThe game has started!");
+        Bukkit.broadcastMessage(config.getString(language + ".messages.game_start_success"));
 
         clearAchievements();
 
@@ -53,19 +56,19 @@ public class GameManager {
         FileConfiguration config = plugin.getConfig();
         Inventory inventory = Bukkit.createInventory(null, 9, "Select a Team");
 
-        ItemStack hunterItem = createMenuItem(config, "menu.hunter");
-        ItemStack speedrunnerItem = createMenuItem(config, "menu.speedrunner");
+        ItemStack hunterItem = createMenuItem(config, config.getString("language") + ".menu.hunter");
+        ItemStack speedrunnerItem = createMenuItem(config, config.getString("language") + ".menu.speedrunner");
 
-        inventory.setItem(config.getInt("menu.hunter.slot"), hunterItem);
-        inventory.setItem(config.getInt("menu.speedrunner.slot"), speedrunnerItem);
+        inventory.setItem(config.getInt(config.getString("language") + ".menu.hunter.slot"), hunterItem);
+        inventory.setItem(config.getInt(config.getString("language") + ".menu.speedrunner.slot"), speedrunnerItem);
 
-        ItemStack addLifeItem = createMenuItem(config, "menu.add_life");
-        ItemStack removeLifeItem = createMenuItem(config, "menu.remove_life");
-        inventory.setItem(config.getInt("menu.add_life.slot"), addLifeItem);
-        inventory.setItem(config.getInt("menu.remove_life.slot"), removeLifeItem);
+        ItemStack addLifeItem = createMenuItem(config, config.getString("language") + ".menu.add_life");
+        ItemStack removeLifeItem = createMenuItem(config, config.getString("language") + ".menu.remove_life");
+        inventory.setItem(config.getInt(config.getString("language") + ".menu.add_life.slot"), addLifeItem);
+        inventory.setItem(config.getInt(config.getString("language") + ".menu.remove_life.slot"), removeLifeItem);
 
-        ItemStack startItem = createMenuItem(config, "menu.start");
-        inventory.setItem(config.getInt("menu.start.slot"), startItem);
+        ItemStack startItem = createMenuItem(config, config.getString("language") + ".menu.start");
+        inventory.setItem(config.getInt(config.getString("language") + ".menu.start.slot"), startItem);
 
         player.openInventory(inventory);
     }
@@ -85,10 +88,21 @@ public class GameManager {
     }
 
     private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
-        int compassDelaySeconds = plugin.getConfig().getInt("hunter.compassgive");
-        Bukkit.getLogger().info("Time until compass is given: " + compassDelaySeconds + " seconds.");
+        // Если уже есть активная задача, отменяем её
+        if (compassCountdownTask != null && !compassCountdownTask.isCancelled()) {
+            compassCountdownTask.cancel();
+            Bukkit.getLogger().info("Old compass countdown task cancelled.");
+        }
 
-        new BukkitRunnable() {
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+        int compassDelaySeconds = config.getInt("hunter.compassgive");
+
+        Bukkit.getLogger().info(language.equals("ru") ?
+                "Время до выдачи компаса хантерам: " + compassDelaySeconds + " секунд." :
+                "Time until compass is given: " + compassDelaySeconds + " seconds.");
+
+        compassCountdownTask = new BukkitRunnable() {
             int countdown = compassDelaySeconds;
 
             @Override
@@ -98,48 +112,57 @@ public class GameManager {
                     cancel();
                     return;
                 }
-
                 sendTimeMessage(countdown);
                 countdown -= 30;
             }
-        }.runTaskTimer(plugin, 0, 20L * 30);
+        }.runTaskTimer(plugin, 0, 20L * 30);  // Запускаем новый таймер и сохраняем задачу
     }
 
     private static void sendTimeMessage(int countdown) {
+        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
         int minutes = countdown / 60;
         int seconds = countdown % 60;
 
         String timeMessage = (minutes > 0) ?
-                "Time until compass is given to hunters: " + minutes + " minute" + (minutes >= 2 ? "s" : "") + " and " + seconds + " seconds" :
-                "Time until compass is given to hunters: " + seconds + " seconds.";
+                (language.equals("ru") ?
+                        "Время до выдачи компаса хантерам: " + minutes + " минут" + (minutes >= 2 ? "с" : "") + " и " + seconds + " секунд" :
+                        "Time until compass is given to hunters: " + minutes + " minute" + (minutes >= 2 ? "s" : "") + " and " + seconds + " seconds") :
+                (language.equals("ru") ?
+                        "Время до выдачи компаса хантерам: " + seconds + " секунд." :
+                        "Time until compass is given to hunters: " + seconds + " seconds.");
 
         Bukkit.broadcastMessage("§a" + timeMessage);
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
-        Bukkit.getLogger().info("Giving compasses to hunters.");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+        Bukkit.getLogger().info(config.getString(language + ".messages.compass_give"));
+
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (plugin.getLifeManager().isHunter(player)) {
-                // Check if player already has a compass
-                boolean hasCompass = player.getInventory().contains(Material.COMPASS);
-                if (!hasCompass) {
-                    ItemStack compass = new ItemStack(Material.COMPASS);
-                    ItemMeta meta = compass.getItemMeta();
-                    if (meta != null) {
-                        meta.setDisplayName("§cHunter's Compass");
-                        compass.setItemMeta(meta);
-                    }
-                    player.getInventory().addItem(compass);
+            if (plugin.getLifeManager().isHunter(player) && !player.getInventory().contains(Material.COMPASS)) {
+                ItemStack compass = new ItemStack(Material.COMPASS);
+                ItemMeta meta = compass.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName("§cHunter's Compass");
+                    compass.setItemMeta(meta);
                 }
+                player.getInventory().addItem(compass);
             }
         }
     }
 
     private static void teleportSpeedrunners(HunterVSSpeedrunnerPlugin plugin) {
-        Bukkit.getLogger().info("Teleporting speedrunners.");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+        Bukkit.getLogger().info(config.getString(language + ".messages.teleport_speed"));
+
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "clear @a");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "time set day");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "effect give @a minecraft:saturation 10 255");
+
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.getLifeManager().isSpeedrunner(player)) {
@@ -151,8 +174,14 @@ public class GameManager {
     }
 
     private static void teleportHuntersDelayed(HunterVSSpeedrunnerPlugin plugin) {
-        int teleportDelay = plugin.getConfig().getInt("hunter.teleportDelay");
-        Bukkit.getLogger().info("Hunter teleport delay: " + teleportDelay + " seconds.");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+        int teleportDelay = config.getInt("hunter.teleportDelay");
+
+        Bukkit.getLogger().info(language.equals("ru") ?
+                "Задержка телепорта хантеров: " + teleportDelay + " секунд." :
+                "Hunter teleport delay: " + teleportDelay + " seconds.");
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -168,26 +197,32 @@ public class GameManager {
     private static void teleportToEventWorld(Player player, HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
         String eventWorldName = config.getString("event.worldName");
-        if (Bukkit.getWorld(eventWorldName) != null) {
-            World eventWorld = Bukkit.getWorld(eventWorldName);
+        String language = config.getString("language");
 
-            // Find the highest ground point at (0, 0) and add two blocks to the height
-            int groundY = eventWorld.getHighestBlockYAt(0, 0);
-            int teleportY = groundY + 2;
-
-            Location teleportLocation = new Location(eventWorld, 0, teleportY, 0);
+        World eventWorld = Bukkit.getWorld(eventWorldName);
+        if (eventWorld != null) {
+            Location teleportLocation = new Location(eventWorld, 0, eventWorld.getHighestBlockYAt(0, 0) + 2, 0);
             player.teleport(teleportLocation);
-            player.sendMessage("§aYou have been teleported to the event world at coordinates (0, " + teleportY + ", 0)!");
         } else {
-            player.sendMessage("§cEvent world not found! use /hunterworld to create  ");
+            player.sendMessage(config.getString(language + ".messages.not_found"));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "reload confirm");
-            player.sendMessage("§cPlugins reload all!");
+            player.sendMessage(config.getString(language + ".messages.plugins"));
         }
     }
 
     private static void clearAchievements() {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
-        Bukkit.broadcastMessage("§cAll achievements have been reset for all players.");
+        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+        Bukkit.broadcastMessage(config.getString(language + ".messages.clear_ach"));
+
+        // Пройтись по каждому игроку и отозвать достижения
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Bukkit.advancementIterator().forEachRemaining(advancement -> {
+                player.getAdvancementProgress(advancement).getAwardedCriteria()
+                        .forEach(criteria -> player.getAdvancementProgress(advancement).revokeCriteria(criteria));
+            });
+        }
     }
 
     public static void endGame() {
@@ -195,21 +230,16 @@ public class GameManager {
         Bukkit.getLogger().info("Game has ended.");
 
         HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
-
-        if (plugin == null) {
-            Bukkit.getLogger().warning("HunterVSSpeedrunner plugin not found!");
-            return;
-        }
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
 
         LifeManager lifeManager = plugin.getLifeManager();
-
         if (lifeManager.getSpeedrunners().isEmpty()) {
-            Bukkit.broadcastMessage("§cHunters win!");
+            Bukkit.broadcastMessage("§a" + config.getString(language + ".messages.hunter_win"));
         } else {
-            Bukkit.broadcastMessage("§aSpeedrunners win!");
+            Bukkit.broadcastMessage("§a" + config.getString(language + ".messages.speedrunners"));
         }
-
-        Bukkit.broadcastMessage("§cThe game has ended.");
+        Bukkit.broadcastMessage("§c" + config.getString(language + ".messages.game_end"));
     }
 
     public static boolean isGameStarted() {

@@ -1,5 +1,5 @@
 name: huntervsspeedrunner
-version: '1.10-release'
+version: '1.20-release'
 main: me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin
 api-version: '1.20'
 authors: [FLINGO]
@@ -19,4 +19,8 @@ commands:
   hunterworld:
     description: Execute commands for the world
     usage: "/hunterworld"
+    permission-message: "You do not have permission to execute this command."
+  hunterreload:
+    description: Reload plugin
+    usage: "/hunterreload"
     permission-message: "You do not have permission to execute this command."

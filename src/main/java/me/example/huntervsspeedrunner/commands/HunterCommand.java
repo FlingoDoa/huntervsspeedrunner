@@ -6,6 +6,7 @@ import me.example.huntervsspeedrunner.utils.GameManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 public class HunterCommand implements CommandExecutor {
@@ -18,9 +19,12 @@ public class HunterCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        FileConfiguration config = plugin.getConfig();
+        String language = config.getString("language");
+
         // Check if the command is run by a player
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cOnly players can execute this command.");
+            sender.sendMessage(config.getString(language + ".messages.only_players"));
             return false;
         }
         Player player = (Player) sender;
@@ -32,29 +36,27 @@ public class HunterCommand implements CommandExecutor {
         // Handle "start" command - start the game
         else if (args[0].equalsIgnoreCase("start")) {
             if (GameManager.isGameStarted()) {
-                player.sendMessage("§cThe game has already started.");
+                player.sendMessage(config.getString(language + ".messages.game_started"));
                 return false;
             }
             if (GameManager.canStartGame(plugin)) {
                 GameManager.startGame(plugin);
-                player.sendMessage("§aThe game has started!");
+                player.sendMessage(config.getString(language + ".messages.game_start_success"));
             } else {
-                player.sendMessage("§cUnable to start the game. Ensure there are players in both teams.");
+                player.sendMessage(config.getString(language + ".messages.game_start_fail"));
             }
         }
         // Handle "stop" command - end the game
         else if (args[0].equalsIgnoreCase("stop")) {
             if (!player.hasPermission("hunter.stop")) {  // Check player permissions
-                player.sendMessage("§cYou do not have permission to execute this command.");
+                player.sendMessage(config.getString(language + ".messages.no_permission"));
                 return false;
             }
             if (GameManager.isGameStarted()) {
                 GameManager.endGame();  // End the game
-                Bukkit.broadcastMessage("§cThe game has been stopped.");
-                org.bukkit.World world = Bukkit.getWorld("world");
-
+                Bukkit.broadcastMessage(config.getString(language + ".messages.game_stopped"));
             } else {
-                player.sendMessage("§cThe game has not started yet.");
+                player.sendMessage(config.getString(language + ".messages.game_not_started"));
             }
         } else {
             return false;  // Command not recognized

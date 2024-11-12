@@ -13,49 +13,48 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.command.Command;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     private LifeManager lifeManager;
-    private GameManager gameManager;  // Adding field for GameManager
-    private boolean isMenuOpen = false;  // Flag to indicate if the menu is open
+    private GameManager gameManager;
+    private boolean isMenuOpen = false;
 
     @Override
     public void onEnable() {
         getLogger().info("Plugin loaded successfully!");
-        this.saveDefaultConfig();  // Saving default configuration
-        this.lifeManager = new LifeManager(this);
-        this.gameManager = new GameManager();  // Initializing GameManager
+        this.saveDefaultConfig();
+        initializeManagers();
+        registerListeners();
+        registerCommands();
+    }
 
-        // Registering event listeners
+    private void initializeManagers() {
+        this.lifeManager = new LifeManager(this);
+        this.gameManager = new GameManager();
+    }
+
+    private void registerListeners() {
         getServer().getPluginManager().registerEvents(new EnderDragonDeathListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
+    }
 
-        // Registering commands
+    private void registerCommands() {
         if (getCommand("hunter") != null) {
             getCommand("hunter").setExecutor(this);
-        } else {
-            getLogger().warning("Command 'hunter' not found in plugin.yml");
         }
-
         if (getCommand("start") != null) {
-            getCommand("start").setExecutor(this);  // Registering start command
-        } else {
-            getLogger().warning("Command 'start' not found in plugin.yml");
+            getCommand("start").setExecutor(this);
         }
-
         if (getCommand("stop") != null) {
-            getCommand("stop").setExecutor(this);   // Registering stop command
-        } else {
-            getLogger().warning("Command 'stop' not found in plugin.yml");
+            getCommand("stop").setExecutor(this);
         }
-
         if (getCommand("hunterworld") != null) {
-            getCommand("hunterworld").setExecutor(this); // Registering new command "hunterworld"
-        } else {
-            getLogger().warning("Command 'hunterworld' not found in plugin.yml");
+            getCommand("hunterworld").setExecutor(this);
+        }
+        if (getCommand("hunterreload") != null) {
+            getCommand("hunterreload").setExecutor(this);
         }
     }
 
@@ -64,7 +63,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
     }
 
     public GameManager getGameManager() {
-        return gameManager;  // Method to get GameManager
+        return gameManager;
     }
 
     public boolean isMenuOpen() {
@@ -75,7 +74,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         this.isMenuOpen = menuOpen;
     }
 
-    // Adding method to get compass item from the configuration
     public ItemStack getCompassItem() {
         FileConfiguration config = this.getConfig();
         String materialName = config.getString("hunter.compass.item");
@@ -96,119 +94,92 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         return compassItem;
     }
 
+    private String getMessage(String key) {
+        FileConfiguration config = this.getConfig();
+        String language = config.getString("language", "en");
+
+        return config.getString(language + ".messages." + key, "Message not found!");
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Command /hunter (open menu)
         if (command.getName().equalsIgnoreCase("hunter")) {
             if (args.length == 0) {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
-                    if (gameManager.isGameStarted()) {  // Check game status through GameManager
-                        player.sendMessage("§cThe game has already started! Cannot open menu.");
+                    if (gameManager.isGameStarted()) {
+                        player.sendMessage(getMessage("game_started"));
                     } else {
-                        if (!isMenuOpen()) {  // Check if the menu is not already open
-                            setMenuOpen(true);  // Set flag to indicate that the menu is open
-                            gameManager.openTeamSelectionMenu(player, this);  // Open menu through GameManager
+                        if (!isMenuOpen()) {
+                            setMenuOpen(true);
+                            gameManager.openTeamSelectionMenu(player, this);
                         } else {
-                            player.sendMessage("§cMenu is already open!");
+                            player.sendMessage(getMessage("menu_closed"));
                         }
                     }
                 } else {
-                    sender.sendMessage("Command can only be used by players.");
+                    sender.sendMessage(getMessage("only_players"));
                 }
                 return true;
             }
 
-            // If argument is "start" or "stop" — for operators
             if (args[0].equalsIgnoreCase("start")) {
-                if (!sender.isOp()) {  // Check if sender is an operator
-                    sender.sendMessage("§cYou do not have permission to use this command.");
+                if (!sender.isOp()) {
+                    sender.sendMessage(getMessage("no_permission"));
                     return true;
                 }
-                if (gameManager.canStartGame(this)) {  // Start game through GameManager
+                if (gameManager.canStartGame(this)) {
                     gameManager.startGame(this);
-                    sender.sendMessage("§aGame started!");
+                    sender.sendMessage(getMessage("game_start_success"));
                 } else {
-                    sender.sendMessage("§cGame cannot start: there must be at least one Hunter and one Speedrunner.");
+                    sender.sendMessage(getMessage("game_start_fail"));
                 }
                 return true;
             }
 
             if (args[0].equalsIgnoreCase("stop")) {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("Command /stop can only be used by players.");
+                    sender.sendMessage(getMessage("only_players"));
                     return false;
                 }
-                if (!sender.isOp()) {  // Check if sender is an operator
-                    sender.sendMessage("§cYou do not have permission to use this command.");
+                if (!sender.isOp()) {
+                    sender.sendMessage(getMessage("no_permission"));
                     return true;
                 }
-                if (gameManager.isGameStarted()) {  // End game through GameManager
+                if (gameManager.isGameStarted()) {
                     gameManager.endGame();
-                    sender.sendMessage("§aGame ended!");
+                    sender.sendMessage(getMessage("game_stopped"));
                 } else {
-                    sender.sendMessage("§cGame cannot be ended as it has not started.");
+                    sender.sendMessage(getMessage("game_not_started"));
                 }
                 return true;
             }
         }
 
-        // New command to execute a sequence of commands with delay
-        if (command.getName().equalsIgnoreCase("hunterworld")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cOnly players can execute this command.");
-                return false;
+        if (command.getName().equalsIgnoreCase("hunterreload")) {
+            if (!sender.isOp()) {
+                sender.sendMessage(getMessage("no_permission"));
+                return true;
             }
 
-            Player player = (Player) sender;
-            if (!player.hasPermission("hunter.world")) {
-                player.sendMessage("§cYou do not have permission to execute this command.");
-                return false;
-            }
-
-            // Execute commands with delay
-            executeWorldCommands(player);
+            reloadPlugin();
+            sender.sendMessage("§aPlugin reloaded successfully!");
             return true;
         }
 
         return false;
     }
 
-    // Method to execute a sequence of commands with delay
-    private void executeWorldCommands(Player player) {
-        // Получаем название мира из конфигурации
-        FileConfiguration config = getConfig();
-        String eventWorldName = config.getString("event.worldName"); // Default "Event" if not found
+    private void reloadPlugin() {
+        // Остановка игры, если она идет
+        if (gameManager.isGameStarted()) {
+            gameManager.endGame();  // Завершение текущей игры
+        }
 
-        player.sendMessage("World regeneration has begun, please wait...");
+        reloadConfig();       // Перезагрузка конфигурации
+        initializeManagers(); // Переинициализация менеджеров для обновления значений из новой конфигурации
 
-        new BukkitRunnable() {
-            int step = 0;
-            final String[] commands = {
-                    "mv delete " + eventWorldName,
-                    "mv confirm",
-                    "mv delete " + eventWorldName + "_nether",
-                    "mv confirm",
-                    "mv delete " + eventWorldName + "the_end",
-                    "mv confirm",
-                    "mv create " + eventWorldName + " world",
-                    "mv create " + eventWorldName + "_nether nether",
-                    "mv create " + eventWorldName + "the_end end"
-            };
-
-            @Override
-            public void run() {
-                if (step < commands.length) {
-                    // Execute command
-                    String command = commands[step];
-                    getServer().dispatchCommand(getServer().getConsoleSender(), command);
-                    step++;
-                } else {
-                    cancel(); // Stop executing commands
-                    player.sendMessage("All commands have been executed.");
-                }
-            }
-        }.runTaskTimer(this, 0L, 40L); // 40L ticks = 2 seconds
+        // Сброс состояния меню и любых других временных данных
+        setMenuOpen(false);
     }
-
 }
