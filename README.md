@@ -13,12 +13,14 @@ Just put the files in the plugins folder on your server. <br>Keep in mind that t
 * /hunter - role selection
 * /hunter start - start game
 * /hunter stop - stop the game
+* /hunterreload - reload plugin
 * /hunterworld - create a location for the event (write immediately), also works to recreate the world of the event
 * Also some settings are made in config.yml / In the next version I will add explanations for each type
 -----------------------------------------------------------------
 ## Localization:
 * Russian
-* Eng (maybe...soon)
+* Eng 
+* You can add yours
 -----------------------------------------------------------------
 ## Dependencies:
 Plugins (Dependency in creation through these world)
