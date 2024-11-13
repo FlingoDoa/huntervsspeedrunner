@@ -1,0 +1,12 @@
+me\example\huntervsspeedrunner\listeners\MenuListener.class
+me\example\huntervsspeedrunner\utils\SpawnTask.class
+me\example\huntervsspeedrunner\utils\GameManager$1.class
+me\example\huntervsspeedrunner\listeners\PlayerDeathListener$1.class
+me\example\huntervsspeedrunner\listeners\PlayerDeathListener.class
+me\example\huntervsspeedrunner\utils\GameManager.class
+me\example\huntervsspeedrunner\commands\HunterCommand.class
+me\example\huntervsspeedrunner\listeners\EnderDragonDeathListener.class
+me\example\huntervsspeedrunner\utils\CompassTask.class
+me\example\huntervsspeedrunner\utils\LifeManager.class
+me\example\huntervsspeedrunner\HunterVSSpeedrunnerPlugin.class
+me\example\huntervsspeedrunner\utils\GameManager$2.class

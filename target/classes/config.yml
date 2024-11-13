@@ -55,13 +55,14 @@ en:
     game_end: "Game end!"
     clear_ach: "§cAll achievements have been reset for all players."
     plygins: "§cPlugins reload all!"
-    not_fond: "§cEvent world not found! use /hunterworld to create world"
+    not_found: "§cEvent world not found! use /hunterworld to create world"
     teleport_speed: "Speedruner teleport"
     compass_give: "Giving compasses to hunters..."
     online: "Speedrunner isn't online or doesn't exist!"
     live_add: "A life has been added! Current lives: "
     live_remove: "A life has been removed! Current lives: "
     live_null: "You have run out of lives!"
+    timegive: "Time before the compass is issued"
 
 ru:
   menu:
@@ -107,10 +108,11 @@ ru:
     game_end: "Игра окончена!"
     clear_ach: "§cВсе достижения были сброшены для всех игроков"
     plygins: "§cПлагины были презагружены"
-    not_fond: "§cМир не был обнаружен, используйте /hunterworld что бы создать мир"
+    not_found: "§cМир не был обнаружен, используйте /hunterworld что бы создать мир"
     teleport_speed: "Телепортирование спидранеров"
     compass_give: "Выдача компаса хантерам..."
     online: "Спидранер не подключен к сети или не существует!"
     live_add: "Жизнь была добавлена! Текущие жизни:"
     live_remove: "Жизнь была удалена! Текущие жизни:"
     live_null: "У вас закончились жизни!"
+    timegive: "Время до выдачи компаса"

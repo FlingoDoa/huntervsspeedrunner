@@ -40,7 +40,7 @@ public class PlayerDeathListener implements Listener {
                     player.getInventory().addItem(compass);
                     player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
                 }
-            }.runTaskLater(plugin, 20L * 10); // Задержка в 10 секунд (20 тиков * 10)
+            }.runTaskLater(plugin, 20L * 20); // Задержка в 10 секунд (20 тиков * 10)
         }
 
         // Если игрок - спидраннер, уменьшаем количество жизней

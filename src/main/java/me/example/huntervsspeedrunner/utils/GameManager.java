@@ -5,9 +5,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -17,6 +22,7 @@ public class GameManager {
 
     private static boolean gameStarted = false;
     private static BukkitTask compassCountdownTask;  // Храним задачу таймера компаса
+    private static BossBar compassBossBar;           // Босс-бар для отображения времени до выдачи компаса
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
@@ -74,72 +80,97 @@ public class GameManager {
     }
 
     private static ItemStack createMenuItem(FileConfiguration config, String path) {
+        // Получаем материал из конфига
         String materialName = config.getString(path + ".item");
-        String displayName = config.getString(path + ".name");
         Material material = Material.getMaterial(materialName);
+        // Если материал не найден, выводим сообщение и выходим
+        if (material == null) {
+            Bukkit.getLogger().warning("Material not found for path: " + path);
+            return null; // Или возвращаем какой-то дефолтный предмет
+        }
+        // Получаем имя для отображения
+        String displayName = config.getString(path + ".name");
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        // Проверяем, что meta не равно null
         if (meta != null) {
             meta.setDisplayName(displayName);
+            // Добавляем флаг скрытия атрибутов
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_POTION_EFFECTS,ItemFlag.HIDE_PLACED_ON );
+            Bukkit.getLogger().warning("Добавленная: " + material);
+            // Устанавливаем изменения в предмет
             item.setItemMeta(meta);
+        } else {
+            Bukkit.getLogger().warning("ItemMeta is null for material: " + material);
         }
 
         return item;
     }
 
-    private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
-        // Если уже есть активная задача, отменяем её
-        if (compassCountdownTask != null && !compassCountdownTask.isCancelled()) {
-            compassCountdownTask.cancel();
-            Bukkit.getLogger().info("Old compass countdown task cancelled.");
-        }
 
+    private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
+        if (compassCountdownTask != null && !compassCountdownTask.isCancelled()) {
+            compassCountdownTask.cancel();
+        }
+        if (compassBossBar != null) {
+            compassBossBar.removeAll();
+            compassBossBar = null;
+        }
+
         int compassDelaySeconds = config.getInt("hunter.compassgive");
 
-        Bukkit.getLogger().info(language.equals("ru") ?
-                "Время до выдачи компаса хантерам: " + compassDelaySeconds + " секунд." :
-                "Time until compass is given: " + compassDelaySeconds + " seconds.");
+        compassBossBar = Bukkit.createBossBar(config.getString(language + ".messages.timegive"), BarColor.PURPLE, BarStyle.SEGMENTED_20);
+        compassBossBar.setProgress(1.0);
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+                compassBossBar.addPlayer(player);
+        }
 
         compassCountdownTask = new BukkitRunnable() {
-            int countdown = compassDelaySeconds;
-
             @Override
             public void run() {
-                if (countdown <= 0) {
+                double progress = compassBossBar.getProgress();
+
+
+                if (progress <= 0) {
+                    Bukkit.getLogger().info("Countdown reached zero, giving compass to hunters.");
                     giveCompassToHunters(plugin);
+                    compassBossBar.removeAll();
+                    if (compassBossBar != null) {
+                        compassBossBar.removeAll();
+                        compassBossBar = null;
+                        Bukkit.broadcastMessage(config.getString(language + ".messages.compass_give"));
+                        Bukkit.getLogger().info("Compass BossBar removed.");
+                    }
                     cancel();
                     return;
                 }
-                sendTimeMessage(countdown);
-                countdown -= 30;
+
+
+                progress -= (1.0 / compassDelaySeconds);
+                if (progress < 0) {
+                    progress = 0;
+                }
+
+                compassBossBar.setProgress(progress);
+
+
+                int remainingSeconds = (int) Math.ceil(progress * compassDelaySeconds);
+                int minutes = remainingSeconds / 60;
+                int seconds = remainingSeconds % 60;
+                String timeMessage = config.getString(language + ".messages.timegive") + ": " +
+                        (minutes > 0 ? minutes + " m " : "") + seconds + " с";
+                compassBossBar.setTitle(timeMessage);
             }
-        }.runTaskTimer(plugin, 0, 20L * 30);  // Запускаем новый таймер и сохраняем задачу
-    }
-
-    private static void sendTimeMessage(int countdown) {
-        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
-        FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
-        int minutes = countdown / 60;
-        int seconds = countdown % 60;
-
-        String timeMessage = (minutes > 0) ?
-                (language.equals("ru") ?
-                        "Время до выдачи компаса хантерам: " + minutes + " минут" + (minutes >= 2 ? "с" : "") + " и " + seconds + " секунд" :
-                        "Time until compass is given to hunters: " + minutes + " minute" + (minutes >= 2 ? "s" : "") + " and " + seconds + " seconds") :
-                (language.equals("ru") ?
-                        "Время до выдачи компаса хантерам: " + seconds + " секунд." :
-                        "Time until compass is given to hunters: " + seconds + " seconds.");
-
-        Bukkit.broadcastMessage("§a" + timeMessage);
+        }.runTaskTimer(plugin, 0, 20L);
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
-        Bukkit.getLogger().info(config.getString(language + ".messages.compass_give"));
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),config.getString(language + ".messages.compass_give"));
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (plugin.getLifeManager().isHunter(player) && !player.getInventory().contains(Material.COMPASS)) {
@@ -189,6 +220,12 @@ public class GameManager {
                     if (plugin.getLifeManager().isHunter(player)) {
                         teleportToEventWorld(player, plugin);
                     }
+                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.2f, 1f);
+                    if (config.getString("language").equalsIgnoreCase("ru")) {
+                        player.sendTitle("Хантеры вышли на охоту!", "", 10, 60, 10); // 10 - время отображения, 60 - время паузы
+                    } else {
+                        player.sendTitle("Hunters are out!", "", 10, 60, 10);
+                    }
                 }
             }
         }.runTaskLater(plugin, 20L * teleportDelay);
@@ -205,7 +242,7 @@ public class GameManager {
             player.teleport(teleportLocation);
         } else {
             player.sendMessage(config.getString(language + ".messages.not_found"));
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "reload confirm");
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunterreload");
             player.sendMessage(config.getString(language + ".messages.plugins"));
         }
     }
@@ -216,7 +253,6 @@ public class GameManager {
         String language = config.getString("language");
         Bukkit.broadcastMessage(config.getString(language + ".messages.clear_ach"));
 
-        // Пройтись по каждому игроку и отозвать достижения
         for (Player player : Bukkit.getOnlinePlayers()) {
             Bukkit.advancementIterator().forEachRemaining(advancement -> {
                 player.getAdvancementProgress(advancement).getAwardedCriteria()
@@ -240,6 +276,16 @@ public class GameManager {
             Bukkit.broadcastMessage("§a" + config.getString(language + ".messages.speedrunners"));
         }
         Bukkit.broadcastMessage("§c" + config.getString(language + ".messages.game_end"));
+
+        if (compassBossBar != null) {
+            compassBossBar.removeAll();
+            compassBossBar = null;
+        }
+
+        if (compassCountdownTask != null) {
+            compassCountdownTask.cancel();
+            compassCountdownTask = null;
+        }
     }
 
     public static boolean isGameStarted() {

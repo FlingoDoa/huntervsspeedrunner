@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.command.Command;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
@@ -137,6 +138,21 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                 return true;
             }
 
+            if (command.getName().equalsIgnoreCase("hunterworld")) {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("only_players");
+                    return false;
+                }
+
+                Player player = (Player) sender;
+                if (!player.hasPermission("hunter.world")) {
+                    player.sendMessage("no_permission");
+                    return false;
+                }
+                executeWorldCommands(player);
+                return true;
+            }
+
             if (args[0].equalsIgnoreCase("stop")) {
                 if (!(sender instanceof Player)) {
                     sender.sendMessage(getMessage("only_players"));
@@ -155,14 +171,29 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                 return true;
             }
         }
-
-        if (command.getName().equalsIgnoreCase("hunterreload")) {
-            if (!sender.isOp()) {
-                sender.sendMessage(getMessage("no_permission"));
-                return true;
+        // New command to execute a sequence of commands with delay
+        if (command.getName().equalsIgnoreCase("hunterworld")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("only_players");
+                return false;
             }
 
-            reloadPlugin();
+            Player player = (Player) sender;
+            if (!player.hasPermission("hunter.world")) {
+                player.sendMessage("no_permission");
+                return false;
+            }
+
+            // Execute commands with delay
+            executeWorldCommands(player);
+            return true;
+        }
+        if (command.getName().equalsIgnoreCase("hunterreload")) {
+           if (!sender.isOp()) {
+               sender.sendMessage(getMessage("no_permission"));
+               return true;
+            }
+           reloadPlugin();
             sender.sendMessage("§aPlugin reloaded successfully!");
             return true;
         }
@@ -171,15 +202,57 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
     }
 
     private void reloadPlugin() {
-        // Остановка игры, если она идет
         if (gameManager.isGameStarted()) {
-            gameManager.endGame();  // Завершение текущей игры
+            gameManager.endGame();
         }
 
-        reloadConfig();       // Перезагрузка конфигурации
-        initializeManagers(); // Переинициализация менеджеров для обновления значений из новой конфигурации
+        reloadConfig();
+        initializeManagers();
 
         // Сброс состояния меню и любых других временных данных
         setMenuOpen(false);
     }
+
+
+    // Method to execute a sequence of commands with delay
+    private void executeWorldCommands(Player player) {
+        // Получаем название мира из конфигурации
+        if (gameManager.isGameStarted()) {
+            gameManager.endGame();  // Завершение текущей игры
+        }
+        FileConfiguration config = getConfig();
+        String eventWorldName = config.getString("event.worldName"); // Default "Event" if not found
+
+        player.sendMessage("World regeneration has begun, please wait...");
+
+        new BukkitRunnable() {
+            int step = 0;
+            final String[] commands = {
+                    "mv delete " + eventWorldName,
+                    "mv confirm",
+                    "mv delete " + eventWorldName + "_nether",
+                    "mv confirm",
+                    "mv delete " + eventWorldName + "_the_end",
+                    "mv confirm",
+                    "mv create " + eventWorldName + " world",
+                    "mv create " + eventWorldName + "_nether nether",
+                    "mv create " + eventWorldName + "_the_end end"
+            };
+
+            @Override
+            public void run() {
+                if (step < commands.length) {
+                    // Execute command
+                    String command = commands[step];
+                    getServer().dispatchCommand(getServer().getConsoleSender(), command);
+                    step++;
+                } else {
+                    cancel(); // Stop executing commands
+                    player.sendMessage("All commands have been executed.");
+                }
+            }
+        }.runTaskTimer(this, 0L, 40L); // 40L ticks = 2 seconds
+    }
+
 }
+
