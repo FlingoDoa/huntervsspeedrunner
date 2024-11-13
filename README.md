@@ -4,7 +4,6 @@ A plugin project for Minecraft
 <p align="center">
 	<img src="https://img.shields.io/badge/Minecraft-1.20--1.21.x-green" alt="Minecraft versions">
 	<img src="https://img.shields.io/github/v/release/FlingoDoa/huntervsspeedrunner" alt="GitHub release (latest by date)">
-	<a href="https://github.com/hyperdefined/huntervsspeedrunner/releases"><img src="https://img.shields.io/github/downloads/huntervsspeedrunner/total?logo=github" alt="Downloads"></a>
 </p>  
 
 ## Installation:
