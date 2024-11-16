@@ -9,6 +9,9 @@ If you want the plugin to be released on a version lower than 1.20, let me know
 
 ## Installation:
 Just put the files in the plugins folder on your server. <br>Keep in mind that these plugins are created for Spigot/Bukkit servers! This will not work on Vanilla Minecraft servers!!!
+
+Assembly
+>/mv clean install
 -----------------------------------------------------------------
 ## Commands:
 * /hunter - role selection
