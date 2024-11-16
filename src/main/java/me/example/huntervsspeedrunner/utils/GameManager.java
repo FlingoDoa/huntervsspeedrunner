@@ -1,11 +1,7 @@
 package me.example.huntervsspeedrunner.utils;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.Location;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -21,8 +17,8 @@ import org.bukkit.scheduler.BukkitTask;
 public class GameManager {
 
     private static boolean gameStarted = false;
-    private static BukkitTask compassCountdownTask;  // Храним задачу таймера компаса
-    private static BossBar compassBossBar;           // Босс-бар для отображения времени до выдачи компаса
+    private static BukkitTask compassCountdownTask;
+    private static BossBar compassBossBar;
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
@@ -80,25 +76,19 @@ public class GameManager {
     }
 
     private static ItemStack createMenuItem(FileConfiguration config, String path) {
-        // Получаем материал из конфига
         String materialName = config.getString(path + ".item");
         Material material = Material.getMaterial(materialName);
-        // Если материал не найден, выводим сообщение и выходим
         if (material == null) {
             Bukkit.getLogger().warning("Material not found for path: " + path);
-            return null; // Или возвращаем какой-то дефолтный предмет
+            return null;
         }
-        // Получаем имя для отображения
+
         String displayName = config.getString(path + ".name");
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
-        // Проверяем, что meta не равно null
         if (meta != null) {
             meta.setDisplayName(displayName);
-            // Добавляем флаг скрытия атрибутов
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_POTION_EFFECTS,ItemFlag.HIDE_PLACED_ON );
-            Bukkit.getLogger().warning("Добавленная: " + material);
-            // Устанавливаем изменения в предмет
             item.setItemMeta(meta);
         } else {
             Bukkit.getLogger().warning("ItemMeta is null for material: " + material);
@@ -125,7 +115,7 @@ public class GameManager {
         compassBossBar.setProgress(1.0);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-                compassBossBar.addPlayer(player);
+            compassBossBar.addPlayer(player);
         }
 
         compassCountdownTask = new BukkitRunnable() {
@@ -165,6 +155,10 @@ public class GameManager {
                 compassBossBar.setTitle(timeMessage);
             }
         }.runTaskTimer(plugin, 0, 20L);
+    }
+
+    public static boolean isCompassCountdownActive() {
+        return compassCountdownTask != null && !compassCountdownTask.isCancelled();
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
@@ -239,7 +233,9 @@ public class GameManager {
         World eventWorld = Bukkit.getWorld(eventWorldName);
         if (eventWorld != null) {
             Location teleportLocation = new Location(eventWorld, 0, eventWorld.getHighestBlockYAt(0, 0) + 2, 0);
+            player.setGameMode(GameMode.SURVIVAL);
             player.teleport(teleportLocation);
+            player.setBedSpawnLocation(teleportLocation, true);
         } else {
             player.sendMessage(config.getString(language + ".messages.not_found"));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunterreload");

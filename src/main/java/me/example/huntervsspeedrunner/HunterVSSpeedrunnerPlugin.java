@@ -14,12 +14,18 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.command.Command;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
+import net.md_5.bungee.api.ChatColor;
 
 public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     private LifeManager lifeManager;
     private GameManager gameManager;
     private boolean isMenuOpen = false;
+    private BossBar bossBar;
 
     @Override
     public void onEnable() {
@@ -189,11 +195,11 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
             return true;
         }
         if (command.getName().equalsIgnoreCase("hunterreload")) {
-           if (!sender.isOp()) {
-               sender.sendMessage(getMessage("no_permission"));
-               return true;
+            if (!sender.isOp()) {
+                sender.sendMessage(getMessage("no_permission"));
+                return true;
             }
-           reloadPlugin();
+            reloadPlugin();
             sender.sendMessage("§aPlugin reloaded successfully!");
             return true;
         }
@@ -209,21 +215,23 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         reloadConfig();
         initializeManagers();
 
-        // Сброс состояния меню и любых других временных данных
         setMenuOpen(false);
     }
 
-
-    // Method to execute a sequence of commands with delay
     private void executeWorldCommands(Player player) {
-        // Получаем название мира из конфигурации
         if (gameManager.isGameStarted()) {
-            gameManager.endGame();  // Завершение текущей игры
+            gameManager.endGame();
         }
+
         FileConfiguration config = getConfig();
-        String eventWorldName = config.getString("event.worldName"); // Default "Event" if not found
+        String eventWorldName = config.getString("event.worldName");
 
         player.sendMessage("World regeneration has begun, please wait...");
+
+        bossBar = Bukkit.createBossBar("Processing commands...", BarColor.GREEN, BarStyle.SEGMENTED_10);
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            bossBar.addPlayer(onlinePlayer);
+        }
 
         new BukkitRunnable() {
             int step = 0;
@@ -236,23 +244,49 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     "mv confirm",
                     "mv create " + eventWorldName + " world",
                     "mv create " + eventWorldName + "_nether nether",
-                    "mv create " + eventWorldName + "_the_end end"
+                    "mv create " + eventWorldName + "_the_end end",
+                    "COMPLETED"
             };
 
             @Override
             public void run() {
                 if (step < commands.length) {
-                    // Execute command
                     String command = commands[step];
                     getServer().dispatchCommand(getServer().getConsoleSender(), command);
+
+                    // Устанавливаем текст с градиентом для BossBar
+                    String gradientTitle = applyGradient(command, ChatColor.GREEN, ChatColor.YELLOW);
+                    bossBar.setTitle(gradientTitle);
+                    bossBar.setProgress((double) step / commands.length);
+
                     step++;
                 } else {
-                    cancel(); // Stop executing commands
+                    cancel();
                     player.sendMessage("All commands have been executed.");
+                    bossBar.removeAll();
+                    bossBar = null;
                 }
             }
-        }.runTaskTimer(this, 0L, 40L); // 40L ticks = 2 seconds
+        }.runTaskTimer(this, 0L, 40L);
     }
 
-}
+    private String applyGradient(String text, ChatColor startColor, ChatColor endColor) {
+        StringBuilder gradientText = new StringBuilder();
+        int length = text.length();
 
+        for (int i = 0; i < length; i++) {
+            float ratio = (float) i / (float) length;
+            ChatColor color = interpolateColor(startColor, endColor, ratio);
+            gradientText.append(color).append(text.charAt(i));
+        }
+
+        return gradientText.toString();
+    }
+
+    private ChatColor interpolateColor(ChatColor startColor, ChatColor endColor, float ratio) {
+        int red = (int) ((1 - ratio) * startColor.getColor().getRed() + ratio * endColor.getColor().getRed());
+        int green = (int) ((1 - ratio) * startColor.getColor().getGreen() + ratio * endColor.getColor().getGreen());
+        int blue = (int) ((1 - ratio) * startColor.getColor().getBlue() + ratio * endColor.getColor().getBlue());
+        return ChatColor.of(new java.awt.Color(red, green, blue));
+    }
+}

@@ -3,6 +3,7 @@ package me.example.huntervsspeedrunner.listeners;
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import me.example.huntervsspeedrunner.utils.LifeManager;
 import org.bukkit.configuration.file.FileConfiguration;
+import me.example.huntervsspeedrunner.utils.GameManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -33,6 +34,11 @@ public class PlayerDeathListener implements Listener {
 
         // Если игрок - охотник и включено получение компаса после смерти
         if (lifeManager.isHunter(player) && config.getBoolean("hunter.giveCompassOnDeath", true)) {
+            // Проверяем, завершился ли первоначальный отсчет
+            if (GameManager.isCompassCountdownActive()) {
+                return; // Если отсчет идет, не выдаем компас
+            }
+
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -59,7 +65,7 @@ public class PlayerDeathListener implements Listener {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), titleCommand);
 
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    p.setGameMode(GameMode.SPECTATOR);
+                    p.setGameMode(GameMode.ADVENTURE);
                     p.getInventory().clear();
                 }
                 plugin.getGameManager().endGame();
