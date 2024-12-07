@@ -26,6 +26,8 @@ Assembly
 * Eng 
 * You can add yours
 -----------------------------------------------------------------
+
+### IN VERSION 1.4+ YOU DO NOT NEED TO USE THESE DEPENDENCIES PLUGINS
 ## Dependencies:
 Plugins (Dependency in creation through these world)
 1. multiverse-core (https://github.com/Multiverse/Multiverse-Core)
