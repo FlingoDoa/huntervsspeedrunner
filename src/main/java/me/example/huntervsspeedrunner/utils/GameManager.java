@@ -1,6 +1,7 @@
 package me.example.huntervsspeedrunner.utils;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
+import me.example.huntervsspeedrunner.utils.RandomTaskManager;
 import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
@@ -10,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import me.example.huntervsspeedrunner.utils.RandomTaskManager.Task;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -22,24 +24,29 @@ public class GameManager {
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        RandomTaskManager randomTaskManager = plugin.getRandomTaskManager();
+        LifeManager lifeManager = plugin.getLifeManager();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (randomTaskManager.isRandomModeEnabled() && lifeManager.isSpeedrunner(player)) {
+                Task task = randomTaskManager.generateRandomTask(player);
+                randomTaskManager.showTaskToPlayer(player, task);
+            }
+        }
+
         if (gameStarted) {
-            return;
+            return; // Если игра уже началась, ничего не делаем
         }
 
         gameStarted = true;
-        plugin.getLifeManager().initializeScoreboard();
+        lifeManager.initializeScoreboard();
         Bukkit.getLogger().info("Game is starting...");
 
-        startCompassCountdown(plugin);  // Запуск отсчета компаса
-        Bukkit.getLogger().info("Compass countdown started.");
+        startCompassCountdown(plugin); // Запуск отсчета компаса
+        Bukkit.broadcastMessage(config.getString("language") + ".messages.game_start_success");
 
-        Bukkit.broadcastMessage(config.getString(language + ".messages.game_start_success"));
-
-        clearAchievements();
-
-        teleportSpeedrunners(plugin);
-        teleportHuntersDelayed(plugin);
+        teleportSpeedrunners(plugin); // Телепортируем спидраннеров
+        teleportHuntersDelayed(plugin); // Телепортируем охотников с задержкой
     }
 
     public static boolean canStartGame(HunterVSSpeedrunnerPlugin plugin) {
@@ -56,11 +63,13 @@ public class GameManager {
         }
 
         FileConfiguration config = plugin.getConfig();
-        Inventory inventory = Bukkit.createInventory(null, 9, "Select a Team");
+        Inventory inventory = Bukkit.createInventory(null, 18, "Select a Team");  // 18 ячеек для 2 строк
 
+        // Создание предметов для меню
         ItemStack hunterItem = createMenuItem(config, config.getString("language") + ".menu.hunter");
         ItemStack speedrunnerItem = createMenuItem(config, config.getString("language") + ".menu.speedrunner");
 
+        // Установка предметов на соответствующие слоты
         inventory.setItem(config.getInt(config.getString("language") + ".menu.hunter.slot"), hunterItem);
         inventory.setItem(config.getInt(config.getString("language") + ".menu.speedrunner.slot"), speedrunnerItem);
 
@@ -72,6 +81,18 @@ public class GameManager {
         ItemStack startItem = createMenuItem(config, config.getString("language") + ".menu.start");
         inventory.setItem(config.getInt(config.getString("language") + ".menu.start.slot"), startItem);
 
+        // Новые кнопки
+        ItemStack toggleRandomItem = createMenuItem(config, config.getString("language") + ".menu.toggle_random");
+        inventory.setItem(10, toggleRandomItem);
+
+        ItemStack restartWorldsItem = createMenuItem(config, config.getString("language") + ".menu.restart_world");
+        inventory.setItem(12, restartWorldsItem);
+
+        ItemStack toggleCompassItem = createMenuItem(config, config.getString("language") + ".menu.toggle_compass");
+        inventory.setItem(14, toggleCompassItem);
+
+        ItemStack reloadPluginItem = createMenuItem(config, config.getString("language") + ".menu.reload_plugin");
+        inventory.setItem(16, reloadPluginItem);
         player.openInventory(inventory);
     }
 
@@ -88,7 +109,7 @@ public class GameManager {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(displayName);
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_POTION_EFFECTS,ItemFlag.HIDE_PLACED_ON );
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_PLACED_ON);
             item.setItemMeta(meta);
         } else {
             Bukkit.getLogger().warning("ItemMeta is null for material: " + material);
@@ -164,7 +185,7 @@ public class GameManager {
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),config.getString(language + ".messages.compass_give"));
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), config.getString(language + ".messages.compass_give"));
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (plugin.getLifeManager().isHunter(player) && !player.getInventory().contains(Material.COMPASS)) {
@@ -197,6 +218,7 @@ public class GameManager {
             }
         });
     }
+
 
     private static void teleportHuntersDelayed(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();

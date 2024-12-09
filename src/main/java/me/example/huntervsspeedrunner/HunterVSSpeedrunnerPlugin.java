@@ -3,9 +3,12 @@ package me.example.huntervsspeedrunner;
 import me.example.huntervsspeedrunner.listeners.PlayerDeathListener;
 import me.example.huntervsspeedrunner.listeners.EnderDragonDeathListener;
 import me.example.huntervsspeedrunner.utils.GameManager;
+import me.example.huntervsspeedrunner.utils.RandomTaskManager;
 import me.example.huntervsspeedrunner.utils.LifeManager;
 import me.example.huntervsspeedrunner.listeners.MenuListener;
+import me.example.huntervsspeedrunner.listeners.PortalRedirectListener;
 import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -15,10 +18,12 @@ import org.bukkit.command.Command;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.Bukkit;
+import java.io.File;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import net.md_5.bungee.api.ChatColor;
+
 
 public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
@@ -36,15 +41,22 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         registerCommands();
     }
 
+
     private void initializeManagers() {
         this.lifeManager = new LifeManager(this);
         this.gameManager = new GameManager();
+        this.randomTaskManager = new RandomTaskManager();
+    }
+
+    public RandomTaskManager getRandomTaskManager() {
+        return randomTaskManager;
     }
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new EnderDragonDeathListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
+        getServer().getPluginManager().registerEvents(new PortalRedirectListener(this), this);
     }
 
     private void registerCommands() {
@@ -108,6 +120,8 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         return config.getString(language + ".messages." + key, "Message not found!");
     }
 
+    private RandomTaskManager randomTaskManager;
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("hunter")) {
@@ -146,15 +160,17 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
             if (command.getName().equalsIgnoreCase("hunterworld")) {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("only_players");
+                    sender.sendMessage("This command can only be executed by a player.");
                     return false;
                 }
 
                 Player player = (Player) sender;
                 if (!player.hasPermission("hunter.world")) {
-                    player.sendMessage("no_permission");
+                    player.sendMessage("You don't have permission to execute this command.");
                     return false;
                 }
+
+                // Выполняем команды для создания миров
                 executeWorldCommands(player);
                 return true;
             }
@@ -207,26 +223,32 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         return false;
     }
 
-    private void reloadPlugin() {
+    public void reloadPlugin() {
         if (gameManager.isGameStarted()) {
             gameManager.endGame();
         }
 
         reloadConfig();
         initializeManagers();
-
         setMenuOpen(false);
+
+        getLogger().info("Plugin reloaded successfully!");
     }
 
-    private void executeWorldCommands(Player player) {
+    public void executeWorldCommands(Player player) {
         if (gameManager.isGameStarted()) {
             gameManager.endGame();
         }
-
         FileConfiguration config = getConfig();
         String eventWorldName = config.getString("event.worldName");
+        World mainWorld = Bukkit.getWorld("world"); // Основной мир
 
-        player.sendMessage("World regeneration has begun, please wait...");
+        if (mainWorld == null) {
+            player.sendMessage("Main world 'world' not found. Please ensure it exists.");
+            return;
+        }
+
+        player.sendMessage("Starting world regeneration...");
 
         bossBar = Bukkit.createBossBar("Processing commands...", BarColor.GREEN, BarStyle.SEGMENTED_10);
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
@@ -235,41 +257,108 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
         new BukkitRunnable() {
             int step = 0;
-            final String[] commands = {
-                    "mv delete " + eventWorldName,
-                    "mv confirm",
-                    "mv delete " + eventWorldName + "_nether",
-                    "mv confirm",
-                    "mv delete " + eventWorldName + "_the_end",
-                    "mv confirm",
-                    "mv create " + eventWorldName + " world",
-                    "mv create " + eventWorldName + "_nether nether",
-                    "mv create " + eventWorldName + "_the_end end",
-                    "COMPLETED"
-            };
 
             @Override
             public void run() {
-                if (step < commands.length) {
-                    String command = commands[step];
-                    getServer().dispatchCommand(getServer().getConsoleSender(), command);
+                try {
+                    switch (step) {
+                        case 0:
+                            // Телепортация игроков из удаляемых миров
+                            for (World world : Bukkit.getWorlds()) {
+                                if (world.getName().equals(eventWorldName) ||
+                                        world.getName().equals(eventWorldName + "_nether") ||
+                                        world.getName().equals(eventWorldName + "_the_end")) {
+                                    for (Player player : world.getPlayers()) {
+                                        player.teleport(mainWorld.getSpawnLocation());
+                                        player.sendMessage("You have been teleported to the main world.");
+                                    }
+                                }
+                            }
+                            break;
 
-                    // Устанавливаем текст с градиентом для BossBar
-                    String gradientTitle = applyGradient(command, ChatColor.GREEN, ChatColor.YELLOW);
-                    bossBar.setTitle(gradientTitle);
-                    bossBar.setProgress((double) step / commands.length);
+                        case 1:
+                            // Удаление старого мира
+                            World oldWorld = Bukkit.getWorld(eventWorldName);
+                            if (oldWorld != null && Bukkit.unloadWorld(oldWorld, false)) {
+                                deleteWorldFolder(oldWorld.getWorldFolder());
+                            }
 
+                            World oldNether = Bukkit.getWorld(eventWorldName + "_nether");
+                            if (oldNether != null && Bukkit.unloadWorld(oldNether, false)) {
+                                deleteWorldFolder(oldNether.getWorldFolder());
+                            }
+
+                            World oldEnd = Bukkit.getWorld(eventWorldName + "_the_end");
+                            if (oldEnd != null && Bukkit.unloadWorld(oldEnd, false)) {
+                                deleteWorldFolder(oldEnd.getWorldFolder());
+                            }
+                            break;
+
+                        case 2:
+                            // Создание нового обычного мира
+                            WorldCreator normalWorldCreator = new WorldCreator(eventWorldName);
+                            normalWorldCreator.environment(World.Environment.NORMAL);
+                            Bukkit.createWorld(normalWorldCreator);
+                            break;
+
+                        case 3:
+                            // Создание нижнего мира
+                            WorldCreator netherWorldCreator = new WorldCreator(eventWorldName + "_nether");
+                            netherWorldCreator.environment(World.Environment.NETHER);
+                            Bukkit.createWorld(netherWorldCreator);
+                            break;
+
+                        case 4:
+                            // Создание энда
+                            WorldCreator endWorldCreator = new WorldCreator(eventWorldName + "_the_end");
+                            endWorldCreator.environment(World.Environment.THE_END);
+                            Bukkit.createWorld(endWorldCreator);
+                            break;
+
+                        default:
+                            bossBar.removeAll();
+                            bossBar = null;
+                            player.sendMessage("World regeneration completed.");
+                            cancel();
+                            return;
+                    }
+
+                    bossBar.setProgress((double) step / 4);
+                    bossBar.setTitle("Processing step " + (step + 1) + " of 5...");
                     step++;
-                } else {
-                    cancel();
-                    player.sendMessage("All commands have been executed.");
+                } catch (Exception e) {
+                    player.sendMessage("An error occurred during world regeneration: " + e.getMessage());
                     bossBar.removeAll();
                     bossBar = null;
+                    cancel();
                 }
             }
         }.runTaskTimer(this, 0L, 40L);
     }
 
+
+    private void deleteWorldFolder(File worldFolder) {
+        if (worldFolder == null || !worldFolder.exists()) {
+            return; // Если директория не существует, выходим
+        }
+
+        File[] files = worldFolder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteWorldFolder(file); // Рекурсивно удаляем подкаталоги
+                } else {
+                    if (!file.delete()) {
+                        getLogger().warning("Failed to delete file: " + file.getPath());
+                    }
+                }
+            }
+        }
+
+        if (!worldFolder.delete()) {
+            getLogger().warning("Failed to delete world folder: " + worldFolder.getPath());
+        }
+    }
     private String applyGradient(String text, ChatColor startColor, ChatColor endColor) {
         StringBuilder gradientText = new StringBuilder();
         int length = text.length();

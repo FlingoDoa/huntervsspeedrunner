@@ -13,6 +13,18 @@ event:
 
 en:
   menu:
+    toggle_random:
+      item: "LEVER"
+      name: "Toggle Random Mode"
+    restart_world:
+      item: "ENDER_PEARL"
+      name: "Restart Worlds"
+    toggle_compass:
+      item: "COMPASS"
+      name: "Toggle Nether Compass"
+    reload_plugin:
+      item: "BOOK"
+      name: "Reload Plugin"
     speedrunner:
       item: LEATHER_BOOTS # Item displayed in menu for Speedrunner selection / Предмет, отображаемый в меню для выбора Спидраннера
       name: "§9Speedrunner" # Name for Speedrunner item / Название предмета для Спидраннера
@@ -34,6 +46,10 @@ en:
       name: "§eStart Game"
       slot: 4
   messages:
+    random_mode_enabled: "Random mode has been enabled!"
+    random_mode_disabled: "Random mode has been disabled!"
+    world_restarting: "Пересоздание миров..."
+    plugin_reloaded: "Плагин успешно перезагружен!"
     only_players: "§cOnly players can execute this command."
     game_started: "§cThe game has already started."
     game_start_success: "§aThe game has started!"
@@ -66,6 +82,18 @@ en:
 
 ru:
   menu:
+    toggle_random:
+      item: "LEVER"
+      name: "Toggle Random Mode"
+    restart_world:
+      item: "ENDER_PEARL"
+      name: "Restart Worlds"
+    toggle_compass:
+      item: "COMPASS"
+      name: "Toggle Nether Compass"
+    reload_plugin:
+      item: "BOOK"
+      name: "Reload Plugin"
     speedrunner:
       item: LEATHER_BOOTS # Предмет, отображаемый в меню для выбора Спидраннера / Item displayed in menu for Speedrunner selection
       name: "§9Спидранер" # Название предмета для Спидраннера / Name for Speedrunner item
@@ -87,6 +115,10 @@ ru:
       name: "§eНачать игру"
       slot: 4
   messages:
+    random_mode_enabled: "Рандомный режим включен!"
+    random_mode_disabled: "Рандомный режим выключен!"
+    world_restarting: "Пересоздание миров..."
+    plugin_reloaded: "Плагин успешно перезагружен!"
     only_players: "§cТолько игроки могут выполнять эту команду."
     game_started: "§cИгра уже началась."
     game_start_success: "§aИгра началась!"
