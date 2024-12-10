@@ -12,6 +12,12 @@ Just put the files in the plugins folder on your server. <br>Keep in mind that t
 
 Assembly
 >/mv clean install
+
+Stable versions:
+> v 1.3 - but requires additional plugins
+ 
+> v 1.45 - does not require additional plugins (but there may be bugs)
+
 -----------------------------------------------------------------
 ## Commands:
 * /hunter - role selection
@@ -22,7 +28,7 @@ Assembly
 * Also some settings are made in config.yml 
 -----------------------------------------------------------------
 ## Localization:
-* Russian
+* Ru
 * Eng 
 * You can add yours
 -----------------------------------------------------------------
