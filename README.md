@@ -18,6 +18,8 @@ Stable versions:
  
 > v 1.45 - does not require additional plugins (but there may be bugs)
 
+> v 1.49-release - In my opinion the most stable version of the plugin (least of all bugs), read changelog
+
 -----------------------------------------------------------------
 ## Commands:
 * /hunter - role selection
