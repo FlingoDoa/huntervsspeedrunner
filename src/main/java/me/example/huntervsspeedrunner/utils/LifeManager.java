@@ -18,7 +18,6 @@ public class LifeManager {
     private Team hunters;
     private Team speedrunners;
 
-    // Store lives for each speedrunner
     private final Map<String, Integer> playerLives = new HashMap<>();
 
     public LifeManager(HunterVSSpeedrunnerPlugin plugin) {
@@ -49,32 +48,49 @@ public class LifeManager {
         initializeScoreboard();
     }
 
+    public int getLives(Player player) {
+        return playerLives.getOrDefault(player.getUniqueId(), 0);
+    }
+
+
+    public void resetPlayers() {
+        if (hunters != null) {
+            for (String playerName : hunters.getEntries()) {
+                hunters.removeEntry(playerName);
+            }
+        }
+
+        if (speedrunners != null) {
+            for (String playerName : speedrunners.getEntries()) {
+                speedrunners.removeEntry(playerName);
+            }
+        }
+        playerLives.clear();
+        updateScoreboard();
+    }
+
+
     public int getPlayerLives(Player player) {
         return playerLives.getOrDefault(player.getName(), 0);
     }
 
-    // Method to calculate total lives of all speedrunners
     public int getTotalSpeedrunnerLives() {
         return playerLives.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    // Initialize scoreboard for all players
     public void initializeScoreboard() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.setScoreboard(scoreboard);
         }
     }
 
-    // Update display of lives on the scoreboard
     public void updateScoreboard() {
         Objective objective = scoreboard.getObjective("dummy");
 
-        // Reset current entries
         for (String entry : scoreboard.getEntries()) {
             scoreboard.resetScores(entry);
         }
 
-        // Update lives for each speedrunner
         for (Map.Entry<String, Integer> entry : playerLives.entrySet()) {
             String playerName = entry.getKey();
             int lives = entry.getValue();
@@ -82,7 +98,6 @@ public class LifeManager {
         }
     }
 
-    // Add player to Hunters team
     public void setHunter(Player player) {
         speedrunners.removeEntry(player.getName());
         hunters.addEntry(player.getName());
@@ -90,7 +105,6 @@ public class LifeManager {
         updateScoreboard();
     }
 
-    // Add player to Speedrunners team with default lives (1)
     public void setSpeedrunner(Player player) {
         hunters.removeEntry(player.getName());
         speedrunners.addEntry(player.getName());
@@ -98,17 +112,14 @@ public class LifeManager {
         updateScoreboard();
     }
 
-    // Check if player is a Speedrunner
     public boolean isSpeedrunner(Player player) {
         return speedrunners.hasEntry(player.getName());
     }
 
-    // Check if player is a Hunter
     public boolean isHunter(Player player) {
         return hunters.hasEntry(player.getName());
     }
 
-    // Add a life to a speedrunner
     public void addLife(Player player) {
         HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
         FileConfiguration config = plugin.getConfig();
@@ -116,12 +127,11 @@ public class LifeManager {
         if (isSpeedrunner(player)) {
             int lives = playerLives.getOrDefault(player.getName(), 1) + 1;
             playerLives.put(player.getName(), lives);
-            player.sendMessage(ChatColor.GREEN + config.getString(language + ".messages.live_add") +" "+ lives);
+            player.sendMessage(ChatColor.GREEN + config.getString(language + ".messages.live_add") + " " + lives);
             updateScoreboard();
         }
     }
 
-    // Remove a life from a speedrunner
     public void removeLife(Player player) {
         HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
         FileConfiguration config = plugin.getConfig();
@@ -133,19 +143,31 @@ public class LifeManager {
                 playerLives.remove(player.getName());
             } else {
                 playerLives.put(player.getName(), lives);
-                player.sendMessage(ChatColor.RED + config.getString(language + ".messages.live_remove") +" "+  lives);
+                player.sendMessage(ChatColor.RED + config.getString(language + ".messages.live_remove") + " " + lives);
             }
             updateScoreboard();
         }
     }
 
-    // Get list of Hunters
-    public List<String> getHunters() {
-        return new ArrayList<>(hunters.getEntries());
+    public List<Player> getHunters() {
+        List<Player> players = new ArrayList<>();
+        for (String playerName : hunters.getEntries()) {
+            Player player = Bukkit.getPlayer(playerName);
+            if (player != null) {
+                players.add(player);
+            }
+        }
+        return players;
     }
 
-    // Get list of Speedrunners
-    public List<String> getSpeedrunners() {
-        return new ArrayList<>(speedrunners.getEntries());
+    public List<Player> getSpeedrunners() {
+        List<Player> players = new ArrayList<>();
+        for (String playerName : speedrunners.getEntries()) {
+            Player player = Bukkit.getPlayer(playerName);
+            if (player != null) {
+                players.add(player);
+            }
+        }
+        return players;
     }
 }

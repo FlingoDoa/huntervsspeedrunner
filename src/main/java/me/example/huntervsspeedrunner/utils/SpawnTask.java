@@ -24,10 +24,8 @@ public class SpawnTask extends BukkitRunnable {
         String language = config.getString("language");
         if (speedrunner != null && speedrunner.isOnline()) {
             Location location = speedrunner.getLocation();
-            // We get the world where the speedrunner is located
             World world = speedrunner.getWorld();
-            // Setspawn this world
-            world.setSpawnLocation(location);  // Set spawn to the speedrunner's location in his world
+            world.setSpawnLocation(location);
         } else {
             Bukkit.getLogger().warning(config.getString(language + "messages.online"));
         }

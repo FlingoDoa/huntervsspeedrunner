@@ -3,10 +3,13 @@ package me.example.huntervsspeedrunner;
 import me.example.huntervsspeedrunner.listeners.PlayerDeathListener;
 import me.example.huntervsspeedrunner.listeners.EnderDragonDeathListener;
 import me.example.huntervsspeedrunner.utils.GameManager;
-import me.example.huntervsspeedrunner.utils.RandomTaskManager;
+import me.example.huntervsspeedrunner.random.RandomTaskManager;
 import me.example.huntervsspeedrunner.utils.LifeManager;
+import me.example.huntervsspeedrunner.utils.PlayerDataManager;
 import me.example.huntervsspeedrunner.listeners.MenuListener;
 import me.example.huntervsspeedrunner.listeners.PortalRedirectListener;
+import me.example.huntervsspeedrunner.listeners.CompassClickListener;
+import me.example.huntervsspeedrunner.utils.CompassManager;
 import org.bukkit.Material;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
@@ -22,7 +25,6 @@ import java.io.File;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
-import net.md_5.bungee.api.ChatColor;
 
 
 public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
@@ -31,6 +33,9 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
     private GameManager gameManager;
     private boolean isMenuOpen = false;
     private BossBar bossBar;
+    private RandomTaskManager randomTaskManager;
+    private CompassManager compassManager;
+    private PlayerDataManager playerDataManager;
 
     @Override
     public void onEnable() {
@@ -39,13 +44,24 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         initializeManagers();
         registerListeners();
         registerCommands();
+        this.randomTaskManager = new RandomTaskManager(this.getDataFolder(), this.getConfig(), this);
+        this.compassManager = new CompassManager();
+        this.playerDataManager = new PlayerDataManager(this.getDataFolder(), this.lifeManager);
     }
 
+
+    public PlayerDataManager getPlayerDataManager() {
+        return playerDataManager;
+    }
+
+    public CompassManager getCompassManager() {
+        return compassManager;
+    }
 
     private void initializeManagers() {
         this.lifeManager = new LifeManager(this);
         this.gameManager = new GameManager();
-        this.randomTaskManager = new RandomTaskManager();
+        this.randomTaskManager = new RandomTaskManager(this.getDataFolder(), this.getConfig(), this);
     }
 
     public RandomTaskManager getRandomTaskManager() {
@@ -57,6 +73,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
         getServer().getPluginManager().registerEvents(new PortalRedirectListener(this), this);
+        getServer().getPluginManager().registerEvents(new CompassClickListener(this), this);
     }
 
     private void registerCommands() {
@@ -120,8 +137,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         return config.getString(language + ".messages." + key, "Message not found!");
     }
 
-    private RandomTaskManager randomTaskManager;
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("hunter")) {
@@ -170,7 +185,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     return false;
                 }
 
-                // Выполняем команды для создания миров
                 executeWorldCommands(player);
                 return true;
             }
@@ -185,7 +199,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     return true;
                 }
                 if (gameManager.isGameStarted()) {
-                    gameManager.endGame();
+                    gameManager.endGame(this);
                     sender.sendMessage(getMessage("game_stopped"));
                 } else {
                     sender.sendMessage(getMessage("game_not_started"));
@@ -193,7 +207,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                 return true;
             }
         }
-        // New command to execute a sequence of commands with delay
         if (command.getName().equalsIgnoreCase("hunterworld")) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage("only_players");
@@ -206,7 +219,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                 return false;
             }
 
-            // Execute commands with delay
             executeWorldCommands(player);
             return true;
         }
@@ -225,11 +237,10 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     public void reloadPlugin() {
         if (gameManager.isGameStarted()) {
-            gameManager.endGame();
+            gameManager.endGame(this);
         }
 
         reloadConfig();
-        initializeManagers();
         setMenuOpen(false);
 
         getLogger().info("Plugin reloaded successfully!");
@@ -237,7 +248,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     public void executeWorldCommands(Player player) {
         if (gameManager.isGameStarted()) {
-            gameManager.endGame();
+            gameManager.endGame(this);
         }
         FileConfiguration config = getConfig();
         String eventWorldName = config.getString("event.worldName");
@@ -263,7 +274,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                 try {
                     switch (step) {
                         case 0:
-                            // Телепортация игроков из удаляемых миров
                             for (World world : Bukkit.getWorlds()) {
                                 if (world.getName().equals(eventWorldName) ||
                                         world.getName().equals(eventWorldName + "_nether") ||
@@ -277,7 +287,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                             break;
 
                         case 1:
-                            // Удаление старого мира
                             World oldWorld = Bukkit.getWorld(eventWorldName);
                             if (oldWorld != null && Bukkit.unloadWorld(oldWorld, false)) {
                                 deleteWorldFolder(oldWorld.getWorldFolder());
@@ -295,21 +304,18 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                             break;
 
                         case 2:
-                            // Создание нового обычного мира
                             WorldCreator normalWorldCreator = new WorldCreator(eventWorldName);
                             normalWorldCreator.environment(World.Environment.NORMAL);
                             Bukkit.createWorld(normalWorldCreator);
                             break;
 
                         case 3:
-                            // Создание нижнего мира
                             WorldCreator netherWorldCreator = new WorldCreator(eventWorldName + "_nether");
                             netherWorldCreator.environment(World.Environment.NETHER);
                             Bukkit.createWorld(netherWorldCreator);
                             break;
 
                         case 4:
-                            // Создание энда
                             WorldCreator endWorldCreator = new WorldCreator(eventWorldName + "_the_end");
                             endWorldCreator.environment(World.Environment.THE_END);
                             Bukkit.createWorld(endWorldCreator);
@@ -339,14 +345,14 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     private void deleteWorldFolder(File worldFolder) {
         if (worldFolder == null || !worldFolder.exists()) {
-            return; // Если директория не существует, выходим
+            return;
         }
 
         File[] files = worldFolder.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
-                    deleteWorldFolder(file); // Рекурсивно удаляем подкаталоги
+                    deleteWorldFolder(file);
                 } else {
                     if (!file.delete()) {
                         getLogger().warning("Failed to delete file: " + file.getPath());
@@ -358,24 +364,5 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         if (!worldFolder.delete()) {
             getLogger().warning("Failed to delete world folder: " + worldFolder.getPath());
         }
-    }
-    private String applyGradient(String text, ChatColor startColor, ChatColor endColor) {
-        StringBuilder gradientText = new StringBuilder();
-        int length = text.length();
-
-        for (int i = 0; i < length; i++) {
-            float ratio = (float) i / (float) length;
-            ChatColor color = interpolateColor(startColor, endColor, ratio);
-            gradientText.append(color).append(text.charAt(i));
-        }
-
-        return gradientText.toString();
-    }
-
-    private ChatColor interpolateColor(ChatColor startColor, ChatColor endColor, float ratio) {
-        int red = (int) ((1 - ratio) * startColor.getColor().getRed() + ratio * endColor.getColor().getRed());
-        int green = (int) ((1 - ratio) * startColor.getColor().getGreen() + ratio * endColor.getColor().getGreen());
-        int blue = (int) ((1 - ratio) * startColor.getColor().getBlue() + ratio * endColor.getColor().getBlue());
-        return ChatColor.of(new java.awt.Color(red, green, blue));
     }
 }

@@ -1,0 +1,98 @@
+categories:
+  inventory:
+    1: "obsidian"
+    2: "bedrock"
+    3: "slime"
+    4: "gold_block"
+    5: "diamond"
+    6: "iron_block"
+    7: "emerald_block"
+    8: "lapis_block"
+    9: "redstone_block"
+    10: "netherite_ingot"
+  kill:
+    1: "enderman"
+    2: "creeper"
+    3: "wither_skeleton"
+    4: "zombie"
+    5: "skeleton"
+    6: "blaze"
+    7: "spider"
+    8: "ghast"
+    9: "hoglin"
+    10: "ender_dragon"
+  tnt:
+    1: "enderman"
+    2: "creeper"
+    3: "wither"
+    4: "zombie"
+    5: "skeleton"
+    6: "blaze"
+    7: "spider"
+    8: "ghast"
+    9: "hoglin"
+    10: "ender_dragon"
+  enchant:
+    item:
+      1:
+        name: "sword"
+        type:
+          1: "sharpness"
+          2: "mending"
+          3: "fire_aspect"
+          4: "looting"
+          5: "unbreaking"
+      2:
+        name: "pickaxe"
+        type:
+          1: "mending"
+          2: "fortune"
+          3: "efficiency"
+          4: "unbreaking"
+          5: "silk_touch"
+      3:
+        name: "legs"
+        type:
+          1: "mending"
+          2: "protection"
+          3: "unbreaking"
+          4: "fire_protection"
+          5: "thorns"
+      4:
+        name: "helmet"
+        type:
+          1: "aqua_affinity"
+          2: "respiration"
+          3: "protection"
+          4: "unbreaking"
+          5: "mending"
+      5:
+        name: "boots"
+        type:
+          1: "feather_falling"
+          2: "depth_strider"
+          3: "frost_walker"
+          4: "protection"
+          5: "unbreaking"
+  effect:
+    1: "fire_resistance"
+    2: "speed"
+    3: "strength"
+    4: "regeneration"
+    5: "water_breathing"
+    6: "night_vision"
+    7: "jump_boost"
+    8: "haste"
+    9: "invisibility"
+    10: "resistance"
+  achievement:
+    1: "end/elytra"
+    2: "story/enter_the_end"
+    3: "nether/obtain_netherite_hoe"
+    4: "nether/distract_piglin"
+    5: "adventure/kill_all_mobs"
+    6: "adventure/hero_of_the_village"
+    7: "end/levitate"
+    8: "adventure/all_potions"
+    9: "nether/create_full_beacon"
+    10: "end/respawn_dragon"

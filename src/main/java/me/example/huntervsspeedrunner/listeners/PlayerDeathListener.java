@@ -64,7 +64,7 @@ public class PlayerDeathListener implements Listener {
                     p.setGameMode(GameMode.ADVENTURE);
                     p.getInventory().clear();
                 }
-                plugin.getGameManager().endGame();
+                plugin.getGameManager().endGame(plugin);
             }
         }
     }
