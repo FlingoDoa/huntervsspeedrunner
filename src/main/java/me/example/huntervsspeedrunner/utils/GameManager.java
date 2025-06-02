@@ -3,6 +3,7 @@ package me.example.huntervsspeedrunner.utils;
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import me.example.huntervsspeedrunner.random.RandomTaskManager;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -15,8 +16,10 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
 import me.example.huntervsspeedrunner.random.Task;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.Location;
 import net.md_5.bungee.api.ChatColor;
 import java.util.List;
 import java.util.ArrayList;
@@ -115,8 +118,8 @@ public class GameManager {
         ItemStack toggleCompassItem = createMenuItem(config, config.getString("language") + ".menu.toggle_compass", compassStatus);
         inventory.setItem(14, toggleCompassItem);
 
-        ItemStack reloadPluginItem = createMenuItem(config, config.getString("language") + ".menu.reload_plugin", "");
-        inventory.setItem(16, reloadPluginItem);
+        ItemStack configButton = createMenuItem(config, config.getString("language") + ".menu.setconf", "");
+        inventory.setItem(16, configButton);
 
         player.openInventory(inventory);
     }
@@ -289,22 +292,81 @@ public class GameManager {
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
-        FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), config.getString(language + ".messages.compass_give"));
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (plugin.getLifeManager().isHunter(player) && !player.getInventory().contains(Material.COMPASS)) {
+        for (Player hunter : Bukkit.getOnlinePlayers()) {
+            if (plugin.getLifeManager().isHunter(hunter) && !hunter.getInventory().contains(Material.COMPASS)) {
                 ItemStack compass = new ItemStack(Material.COMPASS);
                 ItemMeta meta = compass.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName("§cHunter's Compass");
-                    compass.setItemMeta(meta);
+
+                if (meta instanceof CompassMeta) {
+                    CompassMeta compassMeta = (CompassMeta) meta;
+                    compassMeta.setLodestoneTracked(false);
+                    compass.setItemMeta(compassMeta);
                 }
-                player.getInventory().addItem(compass);
+
+                hunter.getInventory().addItem(compass);
+                updateHunterCompass(plugin, hunter);
             }
         }
     }
+
+    private static ItemStack getCompassFromInventory(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.COMPASS) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private static void updateHunterCompass(HunterVSSpeedrunnerPlugin plugin, Player hunter) {
+        ItemStack compass = getCompassFromInventory(hunter);
+        if (compass == null) {
+            hunter.sendMessage("§cУ вас нет компаса!");
+            return;
+        }
+
+        Player target = plugin.getCompassManager().getCurrentTarget(hunter);
+        if (target == null || !target.isOnline()) {
+            hunter.sendMessage("§cЦель недоступна. Компас не обновлен.");
+            return;
+        }
+
+        Location targetLocation = target.getLocation();
+        World hunterWorld = hunter.getWorld();
+        World targetWorld = target.getWorld();
+
+        boolean crossWorldTracking = plugin.getConfig().getBoolean("compass.allow_cross_world_tracking", false);
+
+        if (!crossWorldTracking && !hunterWorld.equals(targetWorld)) {
+            hunter.sendMessage("§cЦель в другом мире. Компас не обновлен.");
+            return;
+        }
+
+        ItemMeta meta = compass.getItemMeta();
+        if (meta instanceof CompassMeta) {
+            CompassMeta compassMeta = (CompassMeta) meta;
+
+            if (hunterWorld.getEnvironment() == World.Environment.NETHER && targetWorld.getEnvironment() == World.Environment.NETHER) {
+                // В Аду используем Lodestone
+                Block lodestone = targetLocation.getBlock();
+                if (lodestone.getType() != Material.LODESTONE) {
+                    lodestone.setType(Material.LODESTONE);
+                }
+                compassMeta.setLodestone(targetLocation);
+                compassMeta.setLodestoneTracked(true);
+                hunter.sendMessage("§aКомпас привязан к Lodestone в Аду.");
+            } else {
+                // В обычном мире компас указывает прямо на игрока
+                compassMeta.setLodestone(null);
+                hunter.setCompassTarget(targetLocation);
+                hunter.sendMessage("§aКомпас обновлен на " + targetWorld.getName() + " ("
+                        + targetLocation.getBlockX() + ", " + targetLocation.getBlockY() + ", " + targetLocation.getBlockZ() + ")");
+            }
+
+            compass.setItemMeta(compassMeta);
+        }
+    }
+
 
     private static void teleportSpeedrunners(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();

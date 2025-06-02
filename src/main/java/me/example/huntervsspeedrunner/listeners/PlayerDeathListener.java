@@ -19,14 +19,20 @@ public class PlayerDeathListener implements Listener {
 
     private final HunterVSSpeedrunnerPlugin plugin;
     private final LifeManager lifeManager;
+    private final GameManager gameManager;
 
     public PlayerDeathListener(HunterVSSpeedrunnerPlugin plugin) {
         this.plugin = plugin;
         this.lifeManager = plugin.getLifeManager();
+        this.gameManager = plugin.getGameManager();
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!GameManager.isGameStarted()) {
+            return;
+        }
+
         Player player = event.getEntity();
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
@@ -40,9 +46,11 @@ public class PlayerDeathListener implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    ItemStack compass = new ItemStack(Material.COMPASS);
-                    player.getInventory().addItem(compass);
-                    player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
+                    if (GameManager.isGameStarted()) {
+                        ItemStack compass = new ItemStack(Material.COMPASS);
+                        player.getInventory().addItem(compass);
+                        player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
+                    }
                 }
             }.runTaskLater(plugin, 20L * 20);
         }

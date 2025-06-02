@@ -56,19 +56,16 @@ public class RandomTaskManager implements Listener {
         Random random = new Random();
 
         if (taskConfig == null) {
-            plugin.getLogger().severe("❌ ERROR: task.yml is not loaded!");
             return new Task("⚠ No tasks available (task.yml not loaded)", p -> false);
         }
 
         ConfigurationSection categoriesSection = taskConfig.getConfigurationSection("categories");
         if (categoriesSection == null) {
-            plugin.getLogger().severe("❌ ERROR: 'categories' section is missing in task.yml!");
             return new Task("⚠ No tasks available (config error)", p -> false);
         }
 
         List<String> categories = new ArrayList<>(categoriesSection.getKeys(false));
         if (categories.isEmpty()) {
-            plugin.getLogger().warning("⚠ No task categories found! Using default task.");
             return new Task("⚠ No categories available", p -> false);
         }
 
@@ -78,11 +75,9 @@ public class RandomTaskManager implements Listener {
             attempts--;
 
             String selectedCategory = categories.get(random.nextInt(categories.size()));
-            plugin.getLogger().info("🔍 Попытка создать задание, выбрана категория: " + selectedCategory);
             ConfigurationSection taskSection = categoriesSection.getConfigurationSection(selectedCategory);
 
             if (taskSection == null || taskSection.getKeys(false).isEmpty()) {
-                plugin.getLogger().warning("⚠ No tasks found in category: " + selectedCategory + ". Retrying...");
                 continue;
             }
 
@@ -95,12 +90,10 @@ public class RandomTaskManager implements Listener {
                     String item = taskSection.getString(itemKey);
 
                     if (item == null) {
-                        plugin.getLogger().severe("❌ Ошибка: itemKey '" + itemKey + "' не найден в 'inventory'!");
                         continue;
                     }
 
                     String taskDescription = "Collect " + count + "x " + item.toUpperCase();
-                    plugin.getLogger().info("📌 [InventoryTask] Task for " + player.getName() + ": " + taskDescription);
 
                     return new InventoryTask(this).generate(player, Collections.singletonList(item), count);
                 }
@@ -111,12 +104,10 @@ public class RandomTaskManager implements Listener {
                     String mob = taskSection.getString(mobKey);
 
                     if (mob == null) {
-                        plugin.getLogger().severe("❌ Ошибка: mobKey '" + mobKey + "' не найден в 'kill'!");
                         continue;
                     }
 
                     String taskDescription = "Kill " + count + " " + mob.toUpperCase();
-                    plugin.getLogger().info("📌 [KillTask] Task for " + player.getName() + ": " + taskDescription);
 
                     return new KillTask(this).generate(player, Collections.singletonList(mob), count);
                 }
@@ -133,12 +124,10 @@ public class RandomTaskManager implements Listener {
                     }
 
                     if (effects.isEmpty()) {
-                        plugin.getLogger().severe("❌ Ошибка: effects не найдены в 'effect'!");
                         continue;
                     }
 
                     String taskDescription = "Gain effects: " + String.join(", ", effects);
-                    plugin.getLogger().info("📌 [EffectTask] Task for " + player.getName() + ": " + taskDescription);
 
                     return new EffectTask(this).generate(player, effects);
                 }
@@ -155,12 +144,10 @@ public class RandomTaskManager implements Listener {
                     }
 
                     if (achievements.isEmpty()) {
-                        plugin.getLogger().severe("❌ Ошибка: achievements не найдены в 'achievement'!");
                         continue;
                     }
 
                     String taskDescription = "Unlock achievements: " + String.join(", ", achievements);
-                    plugin.getLogger().info("📌 [AchievementTask] Task for " + player.getName() + ": " + taskDescription);
 
                     return new AchievementTask(this).generate(player, achievements);
                 }
@@ -168,7 +155,6 @@ public class RandomTaskManager implements Listener {
                 case "enchant": {
                     ConfigurationSection enchantSection = taskSection.getConfigurationSection("item");
                     if (enchantSection == null) {
-                        plugin.getLogger().severe("❌ Ошибка: 'item' секция отсутствует в 'enchant'!");
                         continue;
                     }
 
@@ -178,7 +164,6 @@ public class RandomTaskManager implements Listener {
 
                     ConfigurationSection typeSection = enchantSection.getConfigurationSection(itemKey + ".type");
                     if (typeSection == null) {
-                        plugin.getLogger().severe("❌ Ошибка: 'type' секция отсутствует для предмета '" + item + "' в 'enchant'!");
                         continue;
                     }
 
@@ -191,22 +176,17 @@ public class RandomTaskManager implements Listener {
                     }
 
                     if (selectedEnchants.isEmpty()) {
-                        plugin.getLogger().severe("❌ Ошибка: зачарования не найдены для '" + item + "'!");
                         continue;
                     }
 
                     String taskDescription = "Enchant " + item.toUpperCase() + " with: " + String.join(", ", selectedEnchants);
-                    plugin.getLogger().info("📌 [EnchantTask] Task for " + player.getName() + ": " + taskDescription);
 
                     return new EnchantTask(this).generate(player, selectedEnchants);
                 }
 
                 default:
-                    plugin.getLogger().severe("❌ [ERROR] Неизвестное задание! Категория: " + selectedCategory);
             }
         }
-
-        plugin.getLogger().severe("❌ [ERROR] Не удалось найти подходящее задание после 3 попыток!");
         return new Task("⚠ Unknown Task", p -> false);
     }
 
@@ -225,7 +205,6 @@ public class RandomTaskManager implements Listener {
 
     public void showTaskToAllPlayers(Task task) {
         if (task == null) {
-            plugin.getLogger().warning("⚠ Attempted to show a null task to players!");
             return;
         }
 
@@ -306,7 +285,6 @@ public class RandomTaskManager implements Listener {
 
     public void updateTaskProgress(Player player, double progress) {
         bossBar.setProgress(progress);
-        plugin.getLogger().info("🔄 [DEBUG] Прогресс задания для " + player.getName() + ": " + (int) (progress * 100) + "%");
     }
 
 }

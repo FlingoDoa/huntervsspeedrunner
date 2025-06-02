@@ -27,7 +27,7 @@ public class SpawnTask extends BukkitRunnable {
             World world = speedrunner.getWorld();
             world.setSpawnLocation(location);
         } else {
-            Bukkit.getLogger().warning(config.getString(language + "messages.online"));
+            Bukkit.getLogger().warning(config.getString(language + "111"));
         }
     }
 }

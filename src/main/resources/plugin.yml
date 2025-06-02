@@ -1,5 +1,5 @@
 name: huntervsspeedrunner
-version: '1.48-betta'
+version: '1.5-release'
 main: me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin
 api-version: '1.20'
 folia-supported: true

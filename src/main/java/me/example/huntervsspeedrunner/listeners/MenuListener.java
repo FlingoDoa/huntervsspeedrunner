@@ -12,12 +12,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class MenuListener implements Listener {
 
@@ -29,12 +29,23 @@ public class MenuListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
+        Inventory inventory = event.getClickedInventory();
+        Player player = (Player) event.getWhoClicked();
+
+        if (inventory == null) return;
+
+        String title = event.getView().getTitle();
+        if (title.equals(plugin.getSetConfig().getMenuTitle())) {
+            event.setCancelled(true);
+            plugin.getSetConfig().handleClick(event);
+            return;
+        }
+
         if (!plugin.isMenuOpen()) {
             return;
         }
 
-        Inventory inventory = event.getClickedInventory();
-        if (inventory == null || !inventory.equals(event.getView().getTopInventory())) {
+        if (!inventory.equals(event.getView().getTopInventory())) {
             return;
         }
 
@@ -48,9 +59,8 @@ public class MenuListener implements Listener {
             return;
         }
 
-        Player player = (Player) event.getWhoClicked();
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        String language = config.getString("language", "en");
         String path = language + ".messages.";
         int slot = event.getSlot();
 
@@ -132,6 +142,7 @@ public class MenuListener implements Listener {
                 plugin.executeWorldCommands(player);
                 player.sendMessage(ChatColor.GREEN + config.getString(path + "world_restarting"));
                 break;
+
             case 14:
                 boolean compassEnabled = plugin.getCompassManager().toggleCompass(player);
                 if (compassEnabled) {
@@ -144,8 +155,7 @@ public class MenuListener implements Listener {
                 break;
             case 16:
                 player.closeInventory();
-                player.sendMessage(ChatColor.GREEN + config.getString(path + "plugin_reloaded"));
-                plugin.reloadPlugin();
+                plugin.getSetConfig().openConfigMenu(player);
                 break;
             default:
                 player.sendMessage(ChatColor.RED + "Неизвестный слот: " + slot);
@@ -153,7 +163,7 @@ public class MenuListener implements Listener {
         }
     }
 
-        @EventHandler
+    @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         if (plugin.isMenuOpen()) {
@@ -203,7 +213,6 @@ public class MenuListener implements Listener {
         }
         inventory.setItem(slot, item);
     }
-
 
     private void updateMenuItem(Inventory inventory, int slot, String name, String extraInfo) {
         ItemStack item = inventory.getItem(slot);

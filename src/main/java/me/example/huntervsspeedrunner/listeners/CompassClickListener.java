@@ -1,7 +1,8 @@
 package me.example.huntervsspeedrunner.listeners;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
-import org.bukkit.Bukkit;
+import me.example.huntervsspeedrunner.utils.CompassTask;
+import me.example.huntervsspeedrunner.utils.GameManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -21,30 +22,43 @@ public class CompassClickListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        if (!GameManager.isGameStarted()) {
+            return;
+        }
 
+        Player player = event.getPlayer();
+
+        if (!plugin.getLifeManager().isHunter(player)) {
+            return;
+        }
+
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
         if (itemInHand == null || itemInHand.getType() != Material.COMPASS) {
             return;
         }
-        switch (event.getAction()) {
-            case RIGHT_CLICK_AIR:
-            case RIGHT_CLICK_BLOCK:
-                break;
-            default:
-                return;
+
+        if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_AIR &&
+                event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            return;
         }
 
         List<Player> speedrunners = plugin.getLifeManager().getSpeedrunners();
         if (speedrunners.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "There are no speedrunners to track.");
+            player.sendMessage(ChatColor.RED + "Нет спидраннеров для отслеживания.");
             return;
         }
+
         Player currentTarget = plugin.getCompassManager().getCurrentTarget(player);
-        int currentIndex = speedrunners.indexOf(currentTarget);
+        int currentIndex = currentTarget != null ? speedrunners.indexOf(currentTarget) : -1;
         Player nextTarget = speedrunners.get((currentIndex + 1) % speedrunners.size());
         plugin.getCompassManager().setCurrentTarget(player, nextTarget);
-        player.setCompassTarget(nextTarget.getLocation());
-        player.sendMessage(ChatColor.GREEN + "Compass is now pointing to: " + ChatColor.YELLOW + nextTarget.getName());
+        if (plugin.getCompassManager().getCompassTask(player) != null) {
+            plugin.getCompassManager().getCompassTask(player).cancel();
+        }
+
+        plugin.getCompassManager().setCompassTask(player,
+                new CompassTask(plugin, player, nextTarget).runTaskTimer(plugin, 0L, 20L * 5));
+
+        player.sendMessage(ChatColor.GREEN + "Теперь отслеживается: " + nextTarget.getName());
     }
 }
