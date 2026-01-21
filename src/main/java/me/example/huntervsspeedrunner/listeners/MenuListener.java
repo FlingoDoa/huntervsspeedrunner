@@ -12,12 +12,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class MenuListener implements Listener {
 
@@ -29,12 +29,58 @@ public class MenuListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!plugin.isMenuOpen()) {
-            return;
-        }
+        try {
+            Inventory inventory = event.getClickedInventory();
+            Player player = (Player) event.getWhoClicked();
 
-        Inventory inventory = event.getClickedInventory();
-        if (inventory == null || !inventory.equals(event.getView().getTopInventory())) {
+            if (inventory == null) return;
+
+            String title = event.getView().getTitle();
+            if (title.equals(plugin.getSetConfig().getMenuTitle())) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleClick(event);
+                return;
+            }
+            
+            if (title.equals(ChatColor.DARK_PURPLE + getLocalizedMessage("random_tasks_settings"))) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleDetailedDifficultyClick(event);
+                return;
+            }
+            // Меню выбора категории задач по сложности
+            String strippedTitle2 = ChatColor.stripColor(title);
+            String categoryTitle = getLocalizedMessage("tasks_category_title");
+            if (strippedTitle2.startsWith("Задания •") || strippedTitle2.startsWith(categoryTitle + " •") || strippedTitle2.startsWith("Tasks •")) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleCategoryMenuClick(event);
+                return;
+            }
+            // Меню списка задач конкретной категории
+            String strippedTitle = ChatColor.stripColor(title);
+            if (strippedTitle.startsWith("Задачи ") || strippedTitle.startsWith("Tasks ")) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleTaskListClick(event);
+                return;
+            }
+            // Наковальня добавления задач
+            if (event.getView().getTopInventory().getType() == org.bukkit.event.inventory.InventoryType.ANVIL
+                    && (ChatColor.stripColor(title).startsWith("Добавить ") || ChatColor.stripColor(title).startsWith("Add "))) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleAnvilClick(event);
+                return;
+            }
+            String strippedTitle3 = ChatColor.stripColor(title);
+            String presetsTitle = getLocalizedMessage("scenario_presets_title");
+            if (strippedTitle3.equals("Пресеты сценариев") || strippedTitle3.equals(presetsTitle)) {
+                event.setCancelled(true);
+                plugin.getSetConfig().handleScenarioPresetsClick(event);
+                return;
+            }
+            if (!plugin.isMenuOpen()) {
+                return;
+            }
+
+        if (!inventory.equals(event.getView().getTopInventory())) {
             return;
         }
 
@@ -48,9 +94,8 @@ public class MenuListener implements Listener {
             return;
         }
 
-        Player player = (Player) event.getWhoClicked();
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        String language = config.getString("language", "en");
         String path = language + ".messages.";
         int slot = event.getSlot();
 
@@ -132,6 +177,7 @@ public class MenuListener implements Listener {
                 plugin.executeWorldCommands(player);
                 player.sendMessage(ChatColor.GREEN + config.getString(path + "world_restarting"));
                 break;
+
             case 14:
                 boolean compassEnabled = plugin.getCompassManager().toggleCompass(player);
                 if (compassEnabled) {
@@ -143,17 +189,25 @@ public class MenuListener implements Listener {
                         compassEnabled ? ChatColor.GREEN + " ✅" : ChatColor.RED + " ❌");
                 break;
             case 16:
-                player.closeInventory();
-                player.sendMessage(ChatColor.GREEN + config.getString(path + "plugin_reloaded"));
-                plugin.reloadPlugin();
+                if (player.isOp()) {
+                    player.closeInventory();
+                    plugin.getSetConfig().openConfigMenu(player);
+                }
+                else {
+                    player.sendMessage(ChatColor.RED + config.getString(path + "start_game_op_only"));
+                }
                 break;
             default:
                 player.sendMessage(ChatColor.RED + "Неизвестный слот: " + slot);
                 break;
         }
+        } catch (Throwable e) {
+            plugin.getLogger().severe("Ошибка в MenuListener.onInventoryClick: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-        @EventHandler
+    @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         if (plugin.isMenuOpen()) {
@@ -166,11 +220,12 @@ public class MenuListener implements Listener {
         List<Player> speedrunners = plugin.getLifeManager().getSpeedrunners();
         List<Player> hunters = plugin.getLifeManager().getHunters();
 
-        updateTeamMenuItem(inventory, 2, config.getString(language + ".menu.speedrunner.name"), speedrunners);
-        updateTeamMenuItem(inventory, 6, config.getString(language + ".menu.hunter.name"), hunters);
+        updateTeamMenuItem(inventory, 2, config.getString(language + ".menu.speedrunner.name"), speedrunners, config);
+        updateTeamMenuItem(inventory, 6, config.getString(language + ".menu.hunter.name"), hunters, config);
     }
 
-    private void updateTeamMenuItem(Inventory inventory, int slot, String name, List<Player> players) {
+    private void updateTeamMenuItem(Inventory inventory, int slot, String name, List<Player> players, FileConfiguration config) {
+        String language = config.getString("language", "en");
         ItemStack item = inventory.getItem(slot);
         if (item == null || !item.hasItemMeta()) {
             return;
@@ -182,7 +237,7 @@ public class MenuListener implements Listener {
 
             List<String> lore = new ArrayList<>();
             if (players.isEmpty()) {
-                lore.add(ChatColor.RED + "Пока никто не выбрал этот класс!");
+                lore.add(ChatColor.RED + config.getString(language + ".messages.not_take"));
             } else {
                 for (Player p : players) {
                     lore.add(ChatColor.GRAY + "- " + p.getName());
@@ -192,18 +247,13 @@ public class MenuListener implements Listener {
 
             meta.addItemFlags(
                     ItemFlag.HIDE_ATTRIBUTES,
-                    ItemFlag.HIDE_ENCHANTS,
-                    ItemFlag.HIDE_DYE,
-                    ItemFlag.HIDE_DESTROYS,
-                    ItemFlag.HIDE_POTION_EFFECTS,
-                    ItemFlag.HIDE_PLACED_ON
+                    ItemFlag.HIDE_ENCHANTS
             );
 
             item.setItemMeta(meta);
         }
         inventory.setItem(slot, item);
     }
-
 
     private void updateMenuItem(Inventory inventory, int slot, String name, String extraInfo) {
         ItemStack item = inventory.getItem(slot);
@@ -217,5 +267,12 @@ public class MenuListener implements Listener {
             item.setItemMeta(meta);
         }
         inventory.setItem(slot, item);
+    }
+
+    private String getLocalizedMessage(String key, Object... args) {
+        org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
+        String lang = config.getString("language", "en");
+        String format = config.getString(lang + ".messages." + key, "§c[Missing translation: " + key + "]");
+        return String.format(format, args);
     }
 }

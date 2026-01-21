@@ -1,5 +1,14 @@
 language: "en" # "ru" or "en"
+Erroreporter: true # "true" or "false"
+version: 1.75 #DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
+plugin_version: "1.751-1.21.1" # Plugin version for webhook reports / Версия плагина для отчетов вебхука
 
+# Настройки рандомных заданий
+random_tasks:
+  enabled: true # Включить рандомные задания
+  difficulty: "easy" # Сложность: easy, medium, hard
+  count: 1 # Количество заданий для каждого спидраннера
+  auto_generate: true # Автоматически генерировать задания при старте игры
 hunter:
   teleportDelay: 30 # Delay before hunter teleportation / Задержка перед телепортацией охотника
   compassgive: 120 # Time before compass is given / Время до выдачи компаса охотнику после начала игры
@@ -7,10 +16,8 @@ hunter:
   compass:
     item: COMPASS # DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
     name: "§cHunter's Compass" # Compass name for the hunter / Название компаса для охотника
-
 event:
   worldName: "Event" # Name of the world where the event takes place / Название мира, в котором будет проходить игра
-
 en:
   menu:
     toggle_random:
@@ -21,9 +28,9 @@ en:
       name: "§6Restart Worlds"
     toggle_compass:
       item: "COMPASS"
-      name: "§eToggle Nether and End Compass (not work)"
+      name: "§eToggle Nether and End Compass"
     reload_plugin:
-      item: "BOOK"
+      item: "BLUE_WOOL"
       name: "§8Reload Plugin"
     speedrunner:
       item: "LEATHER_BOOTS" # Item displayed in menu for Speedrunner selection / Предмет, отображаемый в меню для выбора Спидраннера
@@ -40,6 +47,12 @@ en:
     start:
       item: "SPAWNER"
       name: "§eStart Game"
+    setconf:
+      item: "BOOK"
+      name: "§7Edit Config"
+    random_tasks_config:
+      item: "WRITABLE_BOOK"
+      name: "§5Random Tasks Config"
   messages:
     random_mode_enabled: "Random mode has been enabled!"
     random_mode_disabled: "Random mode has been disabled!"
@@ -76,7 +89,80 @@ en:
     live_remove: "A life has been removed! Current lives: "
     live_null: "You have run out of lives!"
     timegive: "Time before the compass is issued"
-
+    change_language: "Language set to: "
+    run_game_fast: "Starting the game..."
+    teleport_delay_changed: "Teleport delay changed to: %d sec"
+    compass_time_changed: "Compass time changed to: %d sec"
+    give_compass_toggled_on: "Give compass on death enabled"
+    give_compass_toggled_off: "Give compass on death disabled"
+    advanced_settings_title: "Advanced Settings"
+    language: "Language"
+    teleport_delay: "Teleport Delay"
+    compass_time: "Compass Time"
+    give_compass_on_death: "Give compass on death"
+    start_game_now: "Start the game now"
+    not_take: "No one has selected this class yet!"
+    reload_plugin: "Reload plugin"
+    back: "Back"
+    yes: "Yes"
+    no: "No"
+    done: "Done"
+    seconds: "seconds"
+    second: "second"
+    random_tasks_settings: "Random Tasks Settings"
+    task_difficulty: "Task Difficulty"
+    easy_tasks: "Easy Tasks"
+    medium_tasks: "Medium Tasks"
+    hard_tasks: "Hard Tasks"
+    difficulty_changed: "Difficulty changed to: %s"
+    easy: "Easy"
+    medium: "Medium"
+    hard: "Hard"
+    task_count_changed: "Task count changed to: %d"
+    add_easy_to_scenario: "+ Add Easy"
+    add_medium_to_scenario: "+ Add Medium"
+    add_hard_to_scenario: "+ Add Hard"
+    remove_last_from_scenario: "Remove Last"
+    clear_scenario: "Clear"
+    scenario_presets: "Presets"
+    task_scenario_summary: "Task Scenario"
+    scenario_empty: "The script is empty. A random preset will be selected."
+    scenario_pieces: "Pieces in execution order:"
+    easy_added: "Added: Easy task to template."
+    medium_added: "Added: Medium task to template."
+    hard_added: "Added: Hard task to template."
+    scenario_cleared: "Task template cleared."
+    last_piece_removed: "Last piece removed from template."
+    scenario_already_empty: "Template is already empty."
+    preset_applied: "Preset applied!"
+    tasks_category_title: "Tasks"
+    category_inventory: "Inventory"
+    category_kill: "Kill"
+    category_tnt: "TNT"
+    category_enchant: "Enchant"
+    category_effect: "Effect"
+    category_achievement: "Achievement"
+    add_task_button: "+ Add Task"
+    task_list_title: "Tasks %s"
+    kill_task_display: "Kill: %s"
+    collect_task_display: "Collect: %s"
+    effect_task_display: "Effect: %s"
+    achievement_task_display: "Achievement: %s"
+    item_enchant_display: "Item: %s"
+    enchants_label: "Enchants: %s"
+    task_added: "Task added: %s → %s"
+    enchant_task_added: "Added item '%s' with enchants: %s"
+    save_error: "Save error: %s"
+    scenario_presets_title: "Scenario Presets"
+    preset_1h1m1e: "1H + 1M + 1E"
+    preset_3e: "3E"
+    preset_2m: "2M"
+    preset_2h: "2H"
+    preset_2e1m: "2E + 1M"
+    preset_1e2m: "1E + 2M"
+    preset_1h2e: "1H + 2E"
+    preset_3m: "3M"
+    preset_3h: "3H"
 ru:
   menu:
     toggle_random:
@@ -87,9 +173,9 @@ ru:
       name: "§6Пересоздать миры"
     toggle_compass:
       item: "COMPASS"
-      name: "§eАктивировать компас во всех мирах (не работает)"
+      name: "§eАктивировать компас во всех мирах"
     reload_plugin:
-      item: "BOOK"
+      item: "BLUE_WOOL"
       name: "§8Перезапустить плагин"
     speedrunner:
       item: "LEATHER_BOOTS" # Предмет, отображаемый в меню для выбора Спидраннера / Item displayed in menu for Speedrunner selection
@@ -106,6 +192,12 @@ ru:
     start:
       item: "SPAWNER"
       name: "§eНачать игру"
+    setconf:
+      item: "BOOK"
+      name: "§7Редактировать конфиг"
+    random_tasks_config:
+      item: "WRITABLE_BOOK"
+      name: "§5Настройки заданий"
   messages:
     random_mode_enabled: "Рандомный режим включен!"
     random_mode_disabled: "Рандомный режим выключен!"
@@ -142,3 +234,77 @@ ru:
     timegive: "Время до выдачи компаса"
     compass_enabled: "Компас включен."
     compass_disabled: "Компас выключен."
+    change_language: "Язык установлен на: "
+    run_game_fast: "Игра запускается..."
+    teleport_delay_changed: "Задержка телепорта изменена на: %d сек"
+    compass_time_changed: "Время до компаса изменено на: %d сек"
+    give_compass_toggled_on: "Компас после смерти включен"
+    give_compass_toggled_off: "Компас после смерти отключен"
+    advanced_settings_title: "Расширенные настройки"
+    language: "Язык"
+    teleport_delay: "Задержка телепорта"
+    compass_time: "Время до компаса"
+    give_compass_on_death: "Компас после смерти"
+    start_game_now: "Стартовать игру сейчас"
+    reload_plugin: "Перезагрузить плагин"
+    not_take: "Пока никто не выбрал этот класс!"
+    back: "Назад"
+    yes: "Да"
+    no: "Нет"
+    done: "Готово"
+    seconds: "сек"
+    second: "секунда"
+    random_tasks_settings: "Настройки рандомных заданий"
+    task_difficulty: "Сложность заданий"
+    easy_tasks: "Легкие задания"
+    medium_tasks: "Средние задания"
+    hard_tasks: "Сложные задания"
+    difficulty_changed: "Сложность изменена на: %s"
+    easy: "Легкая"
+    medium: "Средняя"
+    hard: "Сложная"
+    task_count_changed: "Количество заданий изменено на: %d"
+    add_easy_to_scenario: "+ Лёгкое"
+    add_medium_to_scenario: "+ Среднее"
+    add_hard_to_scenario: "+ Сложное"
+    remove_last_from_scenario: "↩ Убрать последний"
+    clear_scenario: "✖ Очистить"
+    scenario_presets: "★ Пресеты"
+    task_scenario_summary: "Сценарий задач"
+    scenario_empty: "Сценарий пуст. Будет выбран случайный пресет."
+    scenario_pieces: "Кусочки в порядке выполнения:"
+    easy_added: "Добавлено: Лёгкое задание в шаблон."
+    medium_added: "Добавлено: Среднее задание в шаблон."
+    hard_added: "Добавлено: Сложное задание в шаблон."
+    scenario_cleared: "Шаблон задач очищен."
+    last_piece_removed: "Убран последний кусочек из шаблона."
+    scenario_already_empty: "Шаблон уже пуст."
+    preset_applied: "Пресет применён!"
+    tasks_category_title: "Задания"
+    category_inventory: "Inventory"
+    category_kill: "Kill"
+    category_tnt: "TNT"
+    category_enchant: "Enchant"
+    category_effect: "Effect"
+    category_achievement: "Achievement"
+    add_task_button: "+ Добавить задание"
+    task_list_title: "Задачи %s"
+    kill_task_display: "Убить: %s"
+    collect_task_display: "Собрать: %s"
+    effect_task_display: "Эффект: %s"
+    achievement_task_display: "Достижение: %s"
+    item_enchant_display: "Предмет: %s"
+    enchants_label: "Чары: %s"
+    task_added: "Добавлено задание: %s → %s"
+    enchant_task_added: "Добавлен предмет '%s' с чарами: %s"
+    save_error: "Ошибка сохранения: %s"
+    scenario_presets_title: "Пресеты сценариев"
+    preset_1h1m1e: "1H + 1M + 1E"
+    preset_3e: "3E"
+    preset_2m: "2M"
+    preset_2h: "2H"
+    preset_2e1m: "2E + 1M"
+    preset_1e2m: "1E + 2M"
+    preset_1h2e: "1H + 2E"
+    preset_3m: "3M"
+    preset_3h: "3H"

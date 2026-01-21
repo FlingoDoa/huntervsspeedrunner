@@ -1,7 +1,7 @@
 name: huntervsspeedrunner
-version: '1.48-betta'
+version: '1.75-1.21.1'
 main: me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin
-api-version: '1.20'
+api-version: '1.21'
 folia-supported: true
 authors: [FLINGO]
 description: "Plugin for the Hunter vs Speedrunner game"
@@ -24,4 +24,8 @@ commands:
   hunterreload:
     description: Reload plugin
     usage: "/hunterreload"
+    permission-message: "You do not have permission to execute this command."
+  huntertestwebhook:
+    description: Test webhook error reporting
+    usage: "/huntertestwebhook [message]"
     permission-message: "You do not have permission to execute this command."

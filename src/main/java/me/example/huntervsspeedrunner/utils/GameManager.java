@@ -3,6 +3,7 @@ package me.example.huntervsspeedrunner.utils;
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 import me.example.huntervsspeedrunner.random.RandomTaskManager;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -13,10 +14,11 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
-import me.example.huntervsspeedrunner.random.Task;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.Location;
 import net.md_5.bungee.api.ChatColor;
 import java.util.List;
 import java.util.ArrayList;
@@ -32,36 +34,60 @@ public class GameManager {
 
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
-        FileConfiguration config = plugin.getConfig();
-        RandomTaskManager randomTaskManager = plugin.getRandomTaskManager();
-        LifeManager lifeManager = plugin.getLifeManager();
+        try {
+            FileConfiguration config = plugin.getConfig();
+            RandomTaskManager randomTaskManager = plugin.getRandomTaskManager();
+            LifeManager lifeManager = plugin.getLifeManager();
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            plugin.getPlayerDataManager().savePlayerData(player);
-            if (randomTaskManager.isRandomModeEnabled() && lifeManager.isSpeedrunner(player)) {
-                Task randomTask = randomTaskManager.generateRandomTask(player);
-                randomTaskManager.showTaskToAllPlayers(randomTask);
-                randomTaskManager.startTaskChecking(player, randomTask);
+            if (gameStarted) {
+                return;
             }
 
+            gameStarted = true;
+            lifeManager.initializeScoreboard();
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                try {
+                    plugin.getPlayerDataManager().savePlayerData(player);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Ошибка при сохранении данных игрока " + player.getName() + ": " + e.getMessage());
+                }
+            }
+
+            if (randomTaskManager.isRandomModeEnabled()) {
+                    randomTaskManager.generateTasksForAllSpeedrunners();
+            }
+
+            startCompassCountdown(plugin);
+
+            String messagePath = config.getString("language", "en") + ".messages.game_start_success";
+            String message = config.getString(messagePath, "§aThe game has started!");
+            Bukkit.broadcastMessage(message);
+
+            // Отчёт о старте игры по вебхуку
+            if (plugin.getErrorReporter() != null && plugin.getErrorReporter().isWebhookConfigured()) {
+                int hunters = lifeManager.getHunters().size();
+                int speedrunners = lifeManager.getSpeedrunners().size();
+                boolean randomEnabled = randomTaskManager.isRandomModeEnabled();
+
+                StringBuilder details = new StringBuilder();
+                details.append("Стартовала игра.\n");
+                details.append("Игроков: охотники = ").append(hunters)
+                        .append(", спидраннеры = ").append(speedrunners).append("\n");
+                details.append("Рандомные задания: ").append(randomEnabled ? "включены" : "выключены").append("\n");
+                details.append("Версия плагина: ").append(getPluginVersion(plugin)).append("\n");
+                details.append("Версия Minecraft: ").append(Bukkit.getVersion()).append("\n");
+
+                plugin.getErrorReporter().reportGameEvent("Игра запущена", details.toString());
+            }
+
+            teleportSpeedrunners(plugin);
+            teleportHuntersDelayed(plugin);
+        } catch (Throwable e) {
+            plugin.getLogger().severe("Критическая ошибка при запуске игры: " + e.getMessage());
+            e.printStackTrace();
+            gameStarted = false;
         }
-
-        if (gameStarted) {
-            return;
-        }
-
-        gameStarted = true;
-        lifeManager.initializeScoreboard();
-
-        startCompassCountdown(plugin);
-
-        String language = config.getString("language", "en");
-        String messagePath = language + ".messages.game_start_success";
-        String message = config.getString(messagePath, "§aThe game has started!");
-        Bukkit.broadcastMessage(message);
-
-        teleportSpeedrunners(plugin);
-        teleportHuntersDelayed(plugin);
     }
 
     public static boolean canStartGame(HunterVSSpeedrunnerPlugin plugin) {
@@ -115,14 +141,15 @@ public class GameManager {
         ItemStack toggleCompassItem = createMenuItem(config, config.getString("language") + ".menu.toggle_compass", compassStatus);
         inventory.setItem(14, toggleCompassItem);
 
-        ItemStack reloadPluginItem = createMenuItem(config, config.getString("language") + ".menu.reload_plugin", "");
-        inventory.setItem(16, reloadPluginItem);
+        ItemStack configButton = createMenuItem(config, config.getString("language") + ".menu.setconf", "");
+        inventory.setItem(16, configButton);
 
         player.openInventory(inventory);
     }
 
     private static ItemStack createTeamMenuItem(FileConfiguration config, String path, List<Player> players) {
         String materialName = config.getString(path + ".item");
+        String language = config.getString("language", "en");
         Material material = Material.getMaterial(materialName);
         if (material == null) {
             return null;
@@ -136,7 +163,7 @@ public class GameManager {
 
             List<String> lore = new ArrayList<>();
             if (players.isEmpty()) {
-                lore.add(ChatColor.RED + "Пока никто не выбрал этот класс!");
+                lore.add(org.bukkit.ChatColor.RED + config.getString(language + ".messages.not_take"));
             } else {
                 for (Player p : players) {
                     lore.add(ChatColor.GRAY + "- " + p.getName());
@@ -165,9 +192,7 @@ public class GameManager {
             meta.setDisplayName(displayName + " " + extraInfo);
 
 
-            meta.addItemFlags(ItemFlag.values());
-            meta.removeItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
-            meta.removeItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
 
             item.setItemMeta(meta);
         } else {
@@ -227,7 +252,7 @@ public class GameManager {
 
     private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        // language not used here
 
         if (compassCountdownTask != null && !compassCountdownTask.isCancelled()) {
             compassCountdownTask.cancel();
@@ -256,7 +281,7 @@ public class GameManager {
                     if (compassBossBar != null) {
                         compassBossBar.removeAll();
                         compassBossBar = null;
-                        Bukkit.broadcastMessage(config.getString(language + ".messages.compass_give"));
+                        Bukkit.broadcastMessage(config.getString(config.getString("language") + ".messages.compass_give"));
                     }
                     cancel();
                     return;
@@ -272,7 +297,7 @@ public class GameManager {
                 int remainingSeconds = (int) Math.ceil(progress * compassDelaySeconds);
                 int minutes = remainingSeconds / 60;
                 int seconds = remainingSeconds % 60;
-                String timeMessage = config.getString(language + ".messages.timegive") + ": " +
+                String timeMessage = config.getString(config.getString("language") + ".messages.timegive") + ": " +
                         (minutes > 0 ? minutes + "m " : "") + seconds + "s";
 
                 String gradientText = applyGradient(timeMessage, ChatColor.BLUE, ChatColor.DARK_PURPLE);
@@ -289,26 +314,85 @@ public class GameManager {
     }
 
     private static void giveCompassToHunters(HunterVSSpeedrunnerPlugin plugin) {
-        FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), config.getString(language + ".messages.compass_give"));
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (plugin.getLifeManager().isHunter(player) && !player.getInventory().contains(Material.COMPASS)) {
+        for (Player hunter : Bukkit.getOnlinePlayers()) {
+            if (plugin.getLifeManager().isHunter(hunter) && !hunter.getInventory().contains(Material.COMPASS)) {
                 ItemStack compass = new ItemStack(Material.COMPASS);
                 ItemMeta meta = compass.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName("§cHunter's Compass");
-                    compass.setItemMeta(meta);
+
+                if (meta instanceof CompassMeta) {
+                    CompassMeta compassMeta = (CompassMeta) meta;
+                    compassMeta.setLodestoneTracked(false);
+                    compass.setItemMeta(compassMeta);
                 }
-                player.getInventory().addItem(compass);
+
+                hunter.getInventory().addItem(compass);
+                updateHunterCompass(plugin, hunter);
             }
         }
     }
 
+    private static ItemStack getCompassFromInventory(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.COMPASS) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private static void updateHunterCompass(HunterVSSpeedrunnerPlugin plugin, Player hunter) {
+        ItemStack compass = getCompassFromInventory(hunter);
+        if (compass == null) {
+            hunter.sendMessage("§cУ вас нет компаса!");
+            return;
+        }
+
+        Player target = plugin.getCompassManager().getCurrentTarget(hunter);
+        if (target == null || !target.isOnline()) {
+            hunter.sendMessage("§cЦель недоступна. Компас не обновлен.");
+            return;
+        }
+
+        Location targetLocation = target.getLocation();
+        World hunterWorld = hunter.getWorld();
+        World targetWorld = target.getWorld();
+
+        boolean crossWorldTracking = plugin.getConfig().getBoolean("compass.allow_cross_world_tracking", false);
+
+        if (!crossWorldTracking && !hunterWorld.equals(targetWorld)) {
+            hunter.sendMessage("§cЦель в другом мире. Компас не обновлен.");
+            return;
+        }
+
+        ItemMeta meta = compass.getItemMeta();
+        if (meta instanceof CompassMeta) {
+            CompassMeta compassMeta = (CompassMeta) meta;
+
+            if (hunterWorld.getEnvironment() == World.Environment.NETHER && targetWorld.getEnvironment() == World.Environment.NETHER) {
+                // В Аду используем Lodestone
+                Block lodestone = targetLocation.getBlock();
+                if (lodestone.getType() != Material.LODESTONE) {
+                    lodestone.setType(Material.LODESTONE);
+                }
+                compassMeta.setLodestone(targetLocation);
+                compassMeta.setLodestoneTracked(true);
+                hunter.sendMessage("§aКомпас привязан к Lodestone в Аду.");
+            } else {
+                // В обычном мире компас указывает прямо на игрока
+                compassMeta.setLodestone(null);
+                hunter.setCompassTarget(targetLocation);
+                hunter.sendMessage("§aКомпас обновлен на " + targetWorld.getName() + " ("
+                        + targetLocation.getBlockX() + ", " + targetLocation.getBlockY() + ", " + targetLocation.getBlockZ() + ")");
+            }
+
+            compass.setItemMeta(compassMeta);
+        }
+    }
+
+
     private static void teleportSpeedrunners(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        // language not used here
 
         World eventWorld = Bukkit.getWorld(config.getString("event.worldName"));
         if (eventWorld != null) {
@@ -341,10 +425,10 @@ public class GameManager {
 
     private static void teleportHuntersDelayed(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
+        // language not used here
         int teleportDelay = config.getInt("hunter.teleportDelay");
 
-        Bukkit.getLogger().info(language.equals("ru") ?
+        Bukkit.getLogger().info(config.getString("language").equalsIgnoreCase("ru") ?
                 "Задержка телепорта хантеров: " + teleportDelay + " секунд." :
                 "Hunter teleport delay: " + teleportDelay + " seconds.");
 
@@ -376,7 +460,6 @@ public class GameManager {
             Location teleportLocation = new Location(eventWorld, 0, eventWorld.getHighestBlockYAt(0, 0) + 2, 0);
             player.setGameMode(GameMode.SURVIVAL);
             player.teleport(teleportLocation);
-            player.setBedSpawnLocation(teleportLocation, true);
         } else {
             player.sendMessage(config.getString(language + ".messages.not_found"));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunterreload");
@@ -385,9 +468,11 @@ public class GameManager {
     }
 
     public static void endGame(HunterVSSpeedrunnerPlugin plugin) {
+        endGame(plugin, null, null);
+    }
+
+    public static void endGame(HunterVSSpeedrunnerPlugin plugin, String winner, String reason) {
         gameStarted = false;
-        FileConfiguration config = plugin.getConfig();
-        String language = config.getString("language");
         LifeManager lifeManager = plugin.getLifeManager();
 
         plugin.getRandomTaskManager().hideTaskFromAllPlayers();
@@ -417,6 +502,27 @@ public class GameManager {
                 }
             }
         }.runTaskLater(plugin, 40L);
+
+        // Отчёт о завершении игры по вебхуку
+        if (plugin.getErrorReporter() != null && plugin.getErrorReporter().isWebhookConfigured()) {
+            FileConfiguration config = plugin.getConfig();
+            int hunters = lifeManager.getHunters().size();
+            int speedrunners = lifeManager.getSpeedrunners().size();
+            StringBuilder details = new StringBuilder();
+            details.append("Игра завершена.\n");
+            if (winner != null) {
+                details.append("Победитель: ").append(winner).append("\n");
+            }
+            if (reason != null) {
+                details.append("Причина окончания: ").append(reason).append("\n");
+            }
+            details.append("Оставшихся охотников: ").append(hunters)
+                    .append(", спидраннеров: ").append(speedrunners).append("\n");
+            details.append("Версия плагина: ").append(getPluginVersion(plugin)).append("\n");
+            details.append("Версия Minecraft: ").append(Bukkit.getVersion()).append("\n");
+
+            plugin.getErrorReporter().reportGameEvent("Игра завершена", details.toString());
+        }
     }
 
     private static void waitForRespawn(Player player, HunterVSSpeedrunnerPlugin plugin) {
@@ -456,6 +562,15 @@ public class GameManager {
 
     public static boolean isGameStarted() {
         return gameStarted;
+    }
+
+    private static String getPluginVersion(HunterVSSpeedrunnerPlugin plugin) {
+        String version = plugin.getConfig().getString("plugin_version", null);
+        if (version == null || version.isEmpty()) {
+            // Fallback to plugin description version if not set in config
+            version = plugin.getDescription().getVersion();
+        }
+        return version;
     }
 }
 

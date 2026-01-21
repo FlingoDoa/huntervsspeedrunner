@@ -121,7 +121,6 @@ public class LifeManager {
     }
 
     public void addLife(Player player) {
-        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
         if (isSpeedrunner(player)) {
@@ -133,7 +132,6 @@ public class LifeManager {
     }
 
     public void removeLife(Player player) {
-        HunterVSSpeedrunnerPlugin plugin = (HunterVSSpeedrunnerPlugin) Bukkit.getPluginManager().getPlugin("HunterVSSpeedrunner");
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
         if (isSpeedrunner(player)) {

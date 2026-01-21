@@ -27,6 +27,10 @@ public class PlayerDeathListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!GameManager.isGameStarted()) {
+            return;
+        }
+
         Player player = event.getEntity();
         FileConfiguration config = plugin.getConfig();
         String language = config.getString("language");
@@ -40,9 +44,11 @@ public class PlayerDeathListener implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    ItemStack compass = new ItemStack(Material.COMPASS);
-                    player.getInventory().addItem(compass);
-                    player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
+                    if (GameManager.isGameStarted()) {
+                        ItemStack compass = new ItemStack(Material.COMPASS);
+                        player.getInventory().addItem(compass);
+                        player.sendMessage(ChatColor.GREEN + config.getString(path + "compass_received"));
+                    }
                 }
             }.runTaskLater(plugin, 20L * 20);
         }
@@ -64,7 +70,7 @@ public class PlayerDeathListener implements Listener {
                     p.setGameMode(GameMode.ADVENTURE);
                     p.getInventory().clear();
                 }
-                plugin.getGameManager().endGame(plugin);
+                GameManager.endGame(plugin, "Охотники", "Все жизни спидраннеров закончились");
             }
         }
     }

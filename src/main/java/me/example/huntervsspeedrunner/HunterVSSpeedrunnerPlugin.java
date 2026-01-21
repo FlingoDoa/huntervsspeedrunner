@@ -9,10 +9,14 @@ import me.example.huntervsspeedrunner.utils.PlayerDataManager;
 import me.example.huntervsspeedrunner.listeners.MenuListener;
 import me.example.huntervsspeedrunner.listeners.PortalRedirectListener;
 import me.example.huntervsspeedrunner.listeners.CompassClickListener;
+import me.example.huntervsspeedrunner.menus.SetConfig;
 import me.example.huntervsspeedrunner.utils.CompassManager;
+import me.example.huntervsspeedrunner.utils.Feedback;
+import me.example.huntervsspeedrunner.random.BossBarJoinListener;
 import org.bukkit.Material;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
+import me.example.huntervsspeedrunner.utils.ErrorReporter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -36,19 +40,56 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
     private RandomTaskManager randomTaskManager;
     private CompassManager compassManager;
     private PlayerDataManager playerDataManager;
+    private SetConfig setConfig;
+    private ErrorReporter reporter;
 
     @Override
     public void onEnable() {
         getLogger().info("Plugin loaded successfully!");
         this.saveDefaultConfig();
+
+        String webhookUrl = ErrorReporter.decryptWebhookUrl();
+        this.reporter = new ErrorReporter(this, webhookUrl);
+        
+        System.setErr(new java.io.PrintStream(new java.io.OutputStream() {
+            private final StringBuilder buffer = new StringBuilder();
+            @Override
+            public void write(int b) {
+                if (b == '\n') {
+                    reporter.report(new Exception(buffer.toString()), "System.err");
+                    buffer.setLength(0);
+                } else {
+                    buffer.append((char) b);
+                }
+            }
+        }));
+
+        System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
+            private final StringBuilder buffer = new StringBuilder();
+            @Override
+            public void write(int b) {
+                if (b == '\n') {
+                    reporter.report(new Exception(buffer.toString()), "System.out");
+                    buffer.setLength(0);
+                } else {
+                    buffer.append((char) b);
+                }
+            }
+        }));
+        
+        new Feedback(this).forceUpdateIfNeeded();
         initializeManagers();
         registerListeners();
         registerCommands();
-        this.randomTaskManager = new RandomTaskManager(this.getDataFolder(), this.getConfig(), this);
+        this.setConfig = new SetConfig(this);
         this.compassManager = new CompassManager();
         this.playerDataManager = new PlayerDataManager(this.getDataFolder(), this.lifeManager);
+        getServer().getPluginManager().registerEvents(new BossBarJoinListener(randomTaskManager), this);
+        
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            this.reporter.report(new Exception(throwable), "Необработанная ошибка в потоке: " + thread.getName());
+        });
     }
-
 
     public PlayerDataManager getPlayerDataManager() {
         return playerDataManager;
@@ -56,6 +97,10 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     public CompassManager getCompassManager() {
         return compassManager;
+    }
+
+    public SetConfig getSetConfig() {
+        return setConfig;
     }
 
     private void initializeManagers() {
@@ -66,6 +111,10 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     public RandomTaskManager getRandomTaskManager() {
         return randomTaskManager;
+    }
+
+    public ErrorReporter getErrorReporter() {
+        return reporter;
     }
 
     private void registerListeners() {
@@ -143,12 +192,12 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
             if (args.length == 0) {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
-                    if (gameManager.isGameStarted()) {
+                    if (GameManager.isGameStarted()) {
                         player.sendMessage(getMessage("game_started"));
                     } else {
                         if (!isMenuOpen()) {
                             setMenuOpen(true);
-                            gameManager.openTeamSelectionMenu(player, this);
+                            GameManager.openTeamSelectionMenu(player, this);
                         } else {
                             player.sendMessage(getMessage("menu_closed"));
                         }
@@ -164,8 +213,8 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     sender.sendMessage(getMessage("no_permission"));
                     return true;
                 }
-                if (gameManager.canStartGame(this)) {
-                    gameManager.startGame(this);
+                if (GameManager.canStartGame(this)) {
+                    GameManager.startGame(this);
                     sender.sendMessage(getMessage("game_start_success"));
                 } else {
                     sender.sendMessage(getMessage("game_start_fail"));
@@ -198,8 +247,8 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     sender.sendMessage(getMessage("no_permission"));
                     return true;
                 }
-                if (gameManager.isGameStarted()) {
-                    gameManager.endGame(this);
+                if (GameManager.isGameStarted()) {
+                    GameManager.endGame(this);
                     sender.sendMessage(getMessage("game_stopped"));
                 } else {
                     sender.sendMessage(getMessage("game_not_started"));
@@ -232,23 +281,41 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
             return true;
         }
 
+        if (command.getName().equalsIgnoreCase("huntertestwebhook")) {
+            if (!sender.isOp()) {
+                sender.sendMessage(getMessage("no_permission"));
+                return true;
+            }
+            if (reporter == null || !reporter.isWebhookConfigured()) {
+                getLogger().warning("Webhook test command executed but webhook is not configured!");
+                sender.sendMessage("§cWebhook не настроен (ошибка расшифровки).");
+                return true;
+            }
+            String msg = (args.length > 0) ? String.join(" ", args) : "Ручной тест вебхука";
+            getLogger().info("Executing webhook test command with message: " + msg);
+            reporter.reportTest(msg);
+            sender.sendMessage("§aТестовое сообщение отправлено в вебхук (если включен Erroreporter). Проверьте консоль для деталей.");
+            return true;
+        }
+
         return false;
     }
 
     public void reloadPlugin() {
-        if (gameManager.isGameStarted()) {
-            gameManager.endGame(this);
+        if (GameManager.isGameStarted()) {
+            GameManager.endGame(this);
         }
 
         reloadConfig();
+        new Feedback(this).forceUpdateIfNeeded();
         setMenuOpen(false);
 
-        getLogger().info("Plugin reloaded successfully!");
+        getLogger().info("Плагин успешно перезагружен!");
     }
 
     public void executeWorldCommands(Player player) {
-        if (gameManager.isGameStarted()) {
-            gameManager.endGame(this);
+        if (GameManager.isGameStarted()) {
+            GameManager.endGame(this);
         }
         FileConfiguration config = getConfig();
         String eventWorldName = config.getString("event.worldName");

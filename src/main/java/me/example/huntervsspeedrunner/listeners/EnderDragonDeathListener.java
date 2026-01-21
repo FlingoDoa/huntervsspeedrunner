@@ -1,6 +1,7 @@
 package me.example.huntervsspeedrunner.listeners;
 
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
+import me.example.huntervsspeedrunner.utils.GameManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -36,6 +37,6 @@ public class EnderDragonDeathListener implements Listener {
             player.setGameMode(GameMode.SPECTATOR);
             player.getInventory().clear();
         }
-        plugin.getGameManager().endGame(plugin);
+        GameManager.endGame(plugin, "Спидраннеры", "Эндер дракон убит");
     }
 }

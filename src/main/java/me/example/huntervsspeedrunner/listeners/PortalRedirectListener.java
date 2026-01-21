@@ -9,12 +9,17 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.util.Vector;
 import me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PortalRedirectListener implements Listener {
 
     private final HunterVSSpeedrunnerPlugin plugin;
+    private final Map<String, Location> endPlatformLocations; // Хранит локации платформ для каждого мира
 
     public PortalRedirectListener(HunterVSSpeedrunnerPlugin plugin) {
         this.plugin = plugin;
+        this.endPlatformLocations = new HashMap<>();
     }
 
     @EventHandler
@@ -23,38 +28,63 @@ public class PortalRedirectListener implements Listener {
         if (fromWorld == null) return;
 
         String eventWorldName = plugin.getConfig().getString("event.worldName");
-        if (fromWorld.getName().equalsIgnoreCase(eventWorldName)
-                && event.getTo() != null
-                && event.getTo().getWorld().getEnvironment() == World.Environment.NETHER) {
-            World targetNether = plugin.getServer().getWorld(eventWorldName + "_nether");
-            if (targetNether != null) {
-                Location portalLocation = findOrCreatePortal(targetNether, event.getFrom());
-                event.setTo(portalLocation);
+        if (eventWorldName == null) return;
+
+        try {
+            if (fromWorld.getName().equalsIgnoreCase(eventWorldName)
+                    && event.getTo() != null
+                    && event.getTo().getWorld() != null
+                    && event.getTo().getWorld().getEnvironment() == World.Environment.NETHER) {
+
+                World targetNether = plugin.getServer().getWorld(eventWorldName + "_nether");
+                if (targetNether != null) {
+                    Location portalLocation = findOrCreatePortal(targetNether, event.getFrom());
+                    event.setTo(portalLocation);
+                }
             }
-        }
-        else if (fromWorld.getName().equalsIgnoreCase(eventWorldName + "_nether")) {
-            World targetWorld = plugin.getServer().getWorld(eventWorldName);
-            if (targetWorld != null) {
-                Location portalLocation = findOrCreatePortal(targetWorld, event.getFrom());
-                event.setTo(portalLocation);
+            else if (fromWorld.getName().equalsIgnoreCase(eventWorldName + "_nether")) {
+                World targetWorld = plugin.getServer().getWorld(eventWorldName);
+                if (targetWorld != null) {
+                    Location portalLocation = findOrCreatePortal(targetWorld, event.getFrom());
+                    event.setTo(portalLocation);
+                }
             }
-        }
-        else if (fromWorld.getName().equalsIgnoreCase(eventWorldName)
-                && event.getTo() != null
-                && event.getTo().getWorld().getEnvironment() == World.Environment.THE_END) {
-            World targetEnd = plugin.getServer().getWorld(eventWorldName + "_the_end");
-            if (targetEnd != null) {
-                Location platformLocation = getEndPlatformLocation(targetEnd);
-                event.setTo(platformLocation);
+            else if (fromWorld.getName().equalsIgnoreCase(eventWorldName)
+                    && event.getTo() != null
+                    && event.getTo().getWorld() != null
+                    && event.getTo().getWorld().getEnvironment() == World.Environment.THE_END) {
+
+                World targetEnd = plugin.getServer().getWorld(eventWorldName + "_the_end");
+                if (targetEnd != null) {
+                    Location platformLocation = getOrCreateEndPlatformLocation(targetEnd);
+                    if (platformLocation != null) {
+                        event.setTo(platformLocation);
+                    }
+                }
             }
-        }
-        else if (fromWorld.getName().equalsIgnoreCase(eventWorldName + "_the_end")) {
-            World targetWorld = plugin.getServer().getWorld(eventWorldName);
-            if (targetWorld != null) {
-                Location portalLocation = findOrCreatePortal(targetWorld, event.getFrom());
-                event.setTo(portalLocation);
+            else if (fromWorld.getName().equalsIgnoreCase(eventWorldName + "_the_end")) {
+                World targetWorld = plugin.getServer().getWorld(eventWorldName);
+                if (targetWorld != null) {
+                    Location portalLocation = findOrCreatePortal(targetWorld, event.getFrom());
+                    event.setTo(portalLocation);
+                }
             }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error handling portal event: " + e.getMessage());
         }
+    }
+
+    private Location getOrCreateEndPlatformLocation(World endWorld) {
+        // Проверяем, есть ли уже сохраненная локация для этого мира
+        if (endPlatformLocations.containsKey(endWorld.getName())) {
+            return endPlatformLocations.get(endWorld.getName());
+        }
+
+        // Если нет - создаем новую и сохраняем
+        Location platformLocation = locateEndPlatformLocation(endWorld);
+        createEndPlatform(platformLocation);
+        endPlatformLocations.put(endWorld.getName(), platformLocation);
+        return platformLocation;
     }
 
     private Location findOrCreatePortal(World targetWorld, Location fromLocation) {
@@ -75,7 +105,6 @@ public class PortalRedirectListener implements Listener {
     private Location createPortal(World world, Location location) {
         Location portalBase = new Location(world, location.getX(), world.getHighestBlockYAt(location), location.getZ());
 
-        // Генерация рамки портала
         for (int x = -1; x <= 1; x++) {
             for (int y = 0; y <= 3; y++) {
                 portalBase.clone().add(x, y, 0).getBlock().setType(Material.OBSIDIAN);
@@ -86,13 +115,6 @@ public class PortalRedirectListener implements Listener {
         }
         return portalBase;
     }
-
-    private Location getEndPlatformLocation(World endWorld) {
-        Location platformLocation = locateEndPlatformLocation(endWorld);
-        createEndPlatform(platformLocation);
-        return platformLocation;
-    }
-
 
     private Location locateEndPlatformLocation(World endWorld) {
         int x, z;

@@ -1,98 +1,333 @@
-categories:
+easy:
   inventory:
-    1: "obsidian"
-    2: "bedrock"
-    3: "slime"
-    4: "gold_block"
-    5: "diamond"
-    6: "iron_block"
-    7: "emerald_block"
-    8: "lapis_block"
-    9: "redstone_block"
-    10: "netherite_ingot"
+    1: "slime"
+    2: "iron_block"
+    3: "lapis_block"
+    4: "redstone_block"
+    5: "cobblestone"
+    6: "oak_log"
+    7: "glass"
+    8: "torch"
+    9: "crafting_table"
+    10: "furnace"
+
   kill:
-    1: "enderman"
-    2: "creeper"
-    3: "wither_skeleton"
-    4: "zombie"
-    5: "skeleton"
-    6: "blaze"
-    7: "spider"
-    8: "ghast"
-    9: "hoglin"
-    10: "ender_dragon"
+    1: "zombie"
+    2: "skeleton"
+    3: "spider"
+    4: "creeper"
+    5: "drowned"
+    6: "husk"
+    7: "stray"
+    8: "slime"
+    9: "chicken"
+    10: "cow"
+
   tnt:
-    1: "enderman"
-    2: "creeper"
-    3: "wither"
-    4: "zombie"
-    5: "skeleton"
-    6: "blaze"
-    7: "spider"
-    8: "ghast"
-    9: "hoglin"
-    10: "ender_dragon"
+    1: "zombie"
+    2: "skeleton"
+    3: "spider"
+    4: "creeper"
+    5: "cow"
+    6: "pig"
+    7: "sheep"
+    8: "chicken"
+    9: "drowned"
+    10: "rabbit"
+
   enchant:
     item:
       1:
         name: "sword"
         type:
-          1: "sharpness"
-          2: "mending"
-          3: "fire_aspect"
-          4: "looting"
-          5: "unbreaking"
+          1: "unbreaking"
+          2: "fire_aspect"
       2:
         name: "pickaxe"
         type:
-          1: "mending"
-          2: "fortune"
-          3: "efficiency"
-          4: "unbreaking"
-          5: "silk_touch"
+          1: "unbreaking"
+          2: "efficiency"
       3:
-        name: "legs"
-        type:
-          1: "mending"
-          2: "protection"
-          3: "unbreaking"
-          4: "fire_protection"
-          5: "thorns"
-      4:
         name: "helmet"
         type:
           1: "aqua_affinity"
-          2: "respiration"
-          3: "protection"
-          4: "unbreaking"
-          5: "mending"
-      5:
+          2: "unbreaking"
+      4:
         name: "boots"
         type:
           1: "feather_falling"
-          2: "depth_strider"
-          3: "frost_walker"
-          4: "protection"
-          5: "unbreaking"
+          2: "unbreaking"
+      5:
+        name: "shovel"
+        type:
+          1: "efficiency"
+          2: "unbreaking"
+      6:
+        name: "axe"
+        type:
+          1: "efficiency"
+          2: "unbreaking"
+      7:
+        name: "hoe"
+        type:
+          1: "unbreaking"
+      8:
+        name: "helmet"
+        type:
+          3: "protection"
+      9:
+        name: "boots"
+        type:
+          3: "protection"
+      10:
+        name: "pickaxe"
+        type:
+          3: "mending"
+
   effect:
-    1: "fire_resistance"
-    2: "speed"
-    3: "strength"
-    4: "regeneration"
-    5: "water_breathing"
-    6: "night_vision"
-    7: "jump_boost"
-    8: "haste"
-    9: "invisibility"
-    10: "resistance"
+    1: "speed"
+    2: "night_vision"
+    3: "jump_boost"
+    4: "haste"
+    5: "glowing"
+    6: "luck"
+    7: "saturation"
+    8: "slow_falling"
+    9: "conduit_power"
+    10: "health_boost"
+
   achievement:
-    1: "end/elytra"
+    1: "nether/distract_piglin"
     2: "story/enter_the_end"
+    3: "story/mine_diamond"
+    4: "story/smelt_iron"
+    5: "story/shiny_gear"
+    6: "story/craft_tools"
+    7: "story/make_better_tools"
+    8: "story/upgrade_tools"
+    9: "story/obtain_armor"
+    10: "adventure/kill_a_mob"
+
+################################################################
+################################################################
+################################################################
+
+medium:
+  inventory:
+    1: "emerald_block"
+    2: "gold_block"
+    3: "diamond"
+    4: "anvil"
+    5: "enchanting_table"
+    6: "end_crystal"
+    7: "glowstone"
+    8: "honey_block"
+    9: "dispenser"
+    10: "piston"
+
+  kill:
+    1: "enderman"
+    2: "blaze"
+    3: "ghast"
+    4: "hoglin"
+    5: "guardian"
+    6: "phantom"
+    7: "piglin_brute"
+    8: "witch"
+    9: "zoglin"
+    10: "vindicator"
+
+  tnt:
+    1: "enderman"
+    2: "blaze"
+    3: "ghast"
+    4: "hoglin"
+    5: "witch"
+    6: "guardian"
+    7: "phantom"
+    8: "piglin_brute"
+    9: "zoglin"
+    10: "vindicator"
+
+  enchant:
+    item:
+      1:
+        name: "pickaxe"
+        type:
+          1: "fortune"
+          2: "mending"
+      2:
+        name: "legs"
+        type:
+          1: "protection"
+          2: "mending"
+      3:
+        name: "helmet"
+        type:
+          1: "respiration"
+          2: "mending"
+      4:
+        name: "boots"
+        type:
+          1: "protection"
+          2: "depth_strider"
+      5:
+        name: "sword"
+        type:
+          1: "looting"
+      6:
+        name: "axe"
+        type:
+          1: "silk_touch"
+      7:
+        name: "helmet"
+        type:
+          3: "thorns"
+      8:
+        name: "boots"
+        type:
+          3: "frost_walker"
+      9:
+        name: "legs"
+        type:
+          3: "unbreaking"
+      10:
+        name: "pickaxe"
+        type:
+          3: "silk_touch"
+
+  effect:
+    1: "strength"
+    2: "regeneration"
+    3: "fire_resistance"
+    4: "water_breathing"
+    5: "absorption"
+    6: "levitation"
+    7: "slow_falling"
+    8: "resistance"
+    9: "glowing"
+    10: "health_boost"
+
+  achievement:
+    1: "adventure/hero_of_the_village"
+    2: "end/elytra"
     3: "nether/obtain_netherite_hoe"
-    4: "nether/distract_piglin"
-    5: "adventure/kill_all_mobs"
-    6: "adventure/hero_of_the_village"
-    7: "end/levitate"
-    8: "adventure/all_potions"
-    9: "nether/create_full_beacon"
-    10: "end/respawn_dragon"
+    4: "adventure/shoot_arrow"
+    5: "nether/brew_potion"
+    6: "nether/ride_strider"
+    7: "story/follow_ender_eye"
+    8: "adventure/sleep_in_bed"
+    9: "story/iron_tools"
+    10: "story/enchant_item"
+
+
+################################################################
+################################################################
+################################################################
+
+hard:
+  inventory:
+    1: "obsidian"
+    2: "bedrock"
+    3: "netherite_ingot"
+    4: "dragon_egg"
+    5: "beacon"
+    6: "end_portal_frame"
+    7: "command_block"
+    8: "nether_star"
+    9: "lodestone"
+    10: "enchanted_golden_apple"
+
+  kill:
+    1: "wither_skeleton"
+    2: "ender_dragon"
+    3: "Wither"
+    4: "evoker"
+    5: "ravager"
+    6: "warden"
+    7: "pillager"
+    8: "illusioner"
+    9: "elder_guardian"
+    10: "shulker"
+
+  tnt:
+    1: "ender_dragon"
+    2: "wither"
+    3: "evoker"
+    4: "warden"
+    5: "elder_guardian"
+    6: "shulker"
+    7: "illusioner"
+    8: "ravager"
+    9: "piglin_brute"
+    10: "wither_skeleton"
+
+  enchant:
+    item:
+      1:
+        name: "sword"
+        type:
+          1: "mending"
+          2: "looting"
+          3: "sharpness"
+      2:
+        name: "pickaxe"
+        type:
+          1: "silk_touch"
+      3:
+        name: "legs"
+        type:
+          1: "fire_protection"
+          2: "thorns"
+      4:
+        name: "boots"
+        type:
+          1: "frost_walker"
+      5:
+        name: "helmet"
+        type:
+          1: "thorns"
+      6:
+        name: "sword"
+        type:
+          4: "knockback"
+      7:
+        name: "axe"
+        type:
+          2: "smite"
+      8:
+        name: "legs"
+        type:
+          3: "blast_protection"
+      9:
+        name: "boots"
+        type:
+          4: "soul_speed"
+      10:
+        name: "helmet"
+        type:
+          4: "blast_protection"
+
+  effect:
+    1: "invisibility"
+    2: "resistance"
+    3: "wither"
+    4: "blindness"
+    5: "bad_omen"
+    6: "hunger"
+    7: "darkness"
+    8: "fatal_poison"
+    9: "nausea"
+    10: "mining_fatigue"
+
+  achievement:
+    1: "adventure/kill_all_mobs"
+    2: "end/levitate"
+    3: "adventure/all_potions"
+    4: "nether/create_full_beacon"
+    5: "end/respawn_dragon"
+    6: "nether/obtain_ancient_debris"
+    7: "adventure/totem_of_undying"
+    8: "adventure/ride_strider_lava"
+    9: "nether/find_bastion"
+    10: "adventure/trade_with_villager"

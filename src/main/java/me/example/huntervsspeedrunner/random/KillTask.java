@@ -22,6 +22,11 @@ public class KillTask implements Listener {
     }
 
     public Task generate(Player player, List<String> mobs, int amount) {
+        if (player == null) {
+            String targetMob = mobs.get(0).toUpperCase();
+            String taskDescription = "Kill " + amount + " " + targetMob;
+            return new Task(taskDescription, p -> false);
+        }
         String targetMob = mobs.get(0).toUpperCase();
         activeKillTasks.put(player.getUniqueId(), new KillTaskData(targetMob, amount, 0));
 
