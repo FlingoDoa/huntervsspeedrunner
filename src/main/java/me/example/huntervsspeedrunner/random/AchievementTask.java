@@ -5,6 +5,7 @@ import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import java.util.*;
+import me.example.huntervsspeedrunner.utils.I18n;
 
 public class AchievementTask implements Listener {
     private final RandomTaskManager taskManager;
@@ -18,7 +19,11 @@ public class AchievementTask implements Listener {
         int count = random.nextInt(3) + 1;
         Collections.shuffle(achievements);
         List<String> selectedAchievements = achievements.subList(0, Math.min(count, achievements.size()));
-        String taskDescription = "Unlock achievements: " + String.join(", ", selectedAchievements);
+        List<String> pretty = new ArrayList<>();
+        for (String a : selectedAchievements) {
+            pretty.add(I18n.taskName(taskManager.getMainPlugin(), "advancements", String.valueOf(a).toLowerCase()));
+        }
+        String taskDescription = I18n.msg(taskManager.getMainPlugin(), "task_achievements", String.join(", ", pretty));
         return new Task(taskDescription, p -> updateProgress(p, selectedAchievements));
     }
 

@@ -5,7 +5,7 @@ import java.io.File;
 
 public class Feedback {
     private final JavaPlugin plugin;
-    private final double currentVersion = 1.75;
+    private final double currentVersion = 1.8;
 
     public Feedback(JavaPlugin plugin) {
         this.plugin = plugin;

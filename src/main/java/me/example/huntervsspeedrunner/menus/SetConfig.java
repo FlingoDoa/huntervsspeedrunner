@@ -43,7 +43,6 @@ public class SetConfig {
         String compassDisplay = ChatColor.GOLD + getLocalizedMessage("compass_time") + ": " + ChatColor.YELLOW + compassTime + " " + getLocalizedMessage("seconds");
         configMenu.setItem(14, createItem(Material.CLOCK, compassDisplay));
 
-        // Книга настройки рандомных заданий
         String randomTasksDisplay = ChatColor.LIGHT_PURPLE + getLocalizedMessage("random_tasks_settings");
         configMenu.setItem(16, createItem(Material.ENCHANTED_BOOK, randomTasksDisplay));
 
@@ -65,18 +64,15 @@ public class SetConfig {
         Inventory difficultyMenu = Bukkit.createInventory(null, 27, ChatColor.DARK_PURPLE + getLocalizedMessage("random_tasks_settings"));
         FileConfiguration config = plugin.getConfig();
 
-        // фон
         ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta fm = filler.getItemMeta();
         if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
         for (int i = 0; i < 27; i++) difficultyMenu.setItem(i, filler);
 
-        // Включение/выключение рандомных заданий
         boolean randomTasksEnabled = config.getBoolean("random_tasks.enabled", true);
         String randomTasksStatus = ChatColor.AQUA + "Random Tasks: " + (randomTasksEnabled ? ChatColor.GREEN + " ✅" : ChatColor.RED + " ❌");
         difficultyMenu.setItem(4, createItem(Material.LEVER, randomTasksStatus));
 
-        // Слот 13: Бумажка со сценарием задач
         java.util.List<String> scenario = config.getStringList("random_tasks.scenario");
         java.util.List<String> lore = new java.util.ArrayList<>();
         if (scenario == null || scenario.isEmpty()) {
@@ -101,22 +97,18 @@ public class SetConfig {
         }
         difficultyMenu.setItem(13, summaryItem);
 
-        // Слоты 9, 10, 11: Кнопки добавления в список задач (легкое, среднее, сложное)
         difficultyMenu.setItem(9, createItem(Material.LIME_DYE, ChatColor.GREEN + getLocalizedMessage("add_easy_to_scenario")));
         difficultyMenu.setItem(10, createItem(Material.GOLD_INGOT, ChatColor.GOLD + getLocalizedMessage("add_medium_to_scenario")));
         difficultyMenu.setItem(11, createItem(Material.REDSTONE_BLOCK, ChatColor.RED + getLocalizedMessage("add_hard_to_scenario")));
 
-        // Слоты 15, 16, 17: Кнопки просмотра заданий (легкие, средние, сложные)
         difficultyMenu.setItem(15, createItem(Material.LIME_CONCRETE, ChatColor.GREEN + "★ " + getLocalizedMessage("easy_tasks")));
         difficultyMenu.setItem(16, createItem(Material.YELLOW_CONCRETE, ChatColor.GOLD + "★★ " + getLocalizedMessage("medium_tasks")));
         difficultyMenu.setItem(17, createItem(Material.RED_CONCRETE, ChatColor.RED + "★★★ " + getLocalizedMessage("hard_tasks")));
 
-        // Дополнительные кнопки управления сценарием
         difficultyMenu.setItem(18, createItem(Material.NETHER_STAR, ChatColor.AQUA + getLocalizedMessage("scenario_presets")));
         difficultyMenu.setItem(19, createItem(Material.PAPER, ChatColor.YELLOW + getLocalizedMessage("remove_last_from_scenario")));
         difficultyMenu.setItem(20, createItem(Material.BARREL, ChatColor.DARK_RED + getLocalizedMessage("clear_scenario")));
 
-        // Кнопка назад
         difficultyMenu.setItem(22, createItem(Material.BARRIER, ChatColor.RED + getLocalizedMessage("back")));
 
         player.openInventory(difficultyMenu);
@@ -234,7 +226,7 @@ public class SetConfig {
         boolean shouldReopenMenu = true;
 
         switch (slot) {
-            case 4: // Включение/выключение рандомных заданий
+            case 4:
                 boolean currentEnabled = config.getBoolean("random_tasks.enabled", true);
                 boolean newEnabled = !currentEnabled;
                 config.set("random_tasks.enabled", newEnabled);
@@ -254,17 +246,17 @@ public class SetConfig {
                 config.set("random_tasks.scenario", scenario);
                 plugin.saveConfig();
                 player.sendMessage(ChatColor.GREEN + getLocalizedMessage("easy_added"));
-                break;
+                        break;
             }
-            case 10: { // Добавить среднее в сценарий
+            case 10: {
                 java.util.List<String> scenario = new java.util.ArrayList<>(config.getStringList("random_tasks.scenario"));
                 scenario.add("medium");
                 config.set("random_tasks.scenario", scenario);
                 plugin.saveConfig();
                 player.sendMessage(ChatColor.GOLD + getLocalizedMessage("medium_added"));
-                break;
-            }
-            case 11: { // Добавить сложное в сценарий
+                        break;
+                }
+            case 11: {
                 java.util.List<String> scenario = new java.util.ArrayList<>(config.getStringList("random_tasks.scenario"));
                 scenario.add("hard");
                 config.set("random_tasks.scenario", scenario);
@@ -272,33 +264,33 @@ public class SetConfig {
                 player.sendMessage(ChatColor.RED + getLocalizedMessage("hard_added"));
                 break;
             }
-            case 15: // Меню лёгких задач
+            case 15:
                 player.closeInventory();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     openCategoryMenu(player, "easy");
                 }, 1L);
                 shouldReopenMenu = false;
                 break;
-            case 16: // Меню средних задач
+            case 16:
                 player.closeInventory();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     openCategoryMenu(player, "medium");
                 }, 1L);
                 shouldReopenMenu = false;
                 break;
-            case 17: // Меню сложных задач
+            case 17:
                 player.closeInventory();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     openCategoryMenu(player, "hard");
                 }, 1L);
                 shouldReopenMenu = false;
                 break;
-            case 22: // Назад
+            case 22:
                 player.closeInventory();
                 openConfigMenu(player);
                 shouldReopenMenu = false;
                 break;
-            case 2: // Кнопки настройки количества
+            case 2:
                 if (currentSetting != null && currentSetting.equals("taskCount")) {
                     adjustSetting(player, config, currentSetting, 10);
                 }
@@ -309,7 +301,6 @@ public class SetConfig {
                 }
                 break;
             case 18:
-                // ★ Пресеты
                 player.closeInventory();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     openScenarioPresetsMenu(player);
@@ -317,7 +308,6 @@ public class SetConfig {
                 shouldReopenMenu = false;
                 break;
             case 19:
-                // ↩ Убрать последний кусочек
                 java.util.List<String> scenario = new java.util.ArrayList<>(config.getStringList("random_tasks.scenario"));
                 if (!scenario.isEmpty()) {
                     scenario.remove(scenario.size() - 1);
@@ -329,7 +319,6 @@ public class SetConfig {
                 }
                 break;
             case 20:
-                // ✖ Очистить шаблон
                 config.set("random_tasks.scenario", new java.util.ArrayList<>());
                 plugin.saveConfig();
                 player.sendMessage(ChatColor.DARK_RED + getLocalizedMessage("scenario_cleared"));
@@ -351,7 +340,6 @@ public class SetConfig {
         if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
         for (int i = 0; i < 27; i++) inv.setItem(i, filler);
 
-        // Пресет 1: 1H + 1M + 1E
         ItemStack preset1 = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta meta1 = preset1.getItemMeta();
         if (meta1 != null) {
@@ -363,7 +351,6 @@ public class SetConfig {
         }
         inv.setItem(9, preset1);
 
-        // Пресет 2: 3E
         ItemStack preset2 = new ItemStack(Material.LIME_DYE);
         ItemMeta meta2 = preset2.getItemMeta();
         if (meta2 != null) {
@@ -375,7 +362,6 @@ public class SetConfig {
         }
         inv.setItem(10, preset2);
 
-        // Пресет 3: 2M
         ItemStack preset3 = new ItemStack(Material.GOLD_INGOT);
         ItemMeta meta3 = preset3.getItemMeta();
         if (meta3 != null) {
@@ -387,7 +373,6 @@ public class SetConfig {
         }
         inv.setItem(11, preset3);
 
-        // Пресет 4: 2H
         ItemStack preset4 = new ItemStack(Material.NETHERITE_INGOT);
         ItemMeta meta4 = preset4.getItemMeta();
         if (meta4 != null) {
@@ -399,7 +384,6 @@ public class SetConfig {
         }
         inv.setItem(12, preset4);
 
-        // Пресет 5: 2E + 1M
         ItemStack preset5 = new ItemStack(Material.PAPER);
         ItemMeta meta5 = preset5.getItemMeta();
         if (meta5 != null) {
@@ -411,7 +395,6 @@ public class SetConfig {
         }
         inv.setItem(13, preset5);
 
-        // Пресет 6: 1E + 2M
         ItemStack preset6 = new ItemStack(Material.EMERALD);
         ItemMeta meta6 = preset6.getItemMeta();
         if (meta6 != null) {
@@ -423,7 +406,6 @@ public class SetConfig {
         }
         inv.setItem(14, preset6);
 
-        // Пресет 7: 1H + 2E
         ItemStack preset7 = new ItemStack(Material.DIAMOND);
         ItemMeta meta7 = preset7.getItemMeta();
         if (meta7 != null) {
@@ -435,7 +417,6 @@ public class SetConfig {
         }
         inv.setItem(15, preset7);
 
-        // Пресет 8: 3M
         ItemStack preset8 = new ItemStack(Material.GOLDEN_APPLE);
         ItemMeta meta8 = preset8.getItemMeta();
         if (meta8 != null) {
@@ -447,7 +428,6 @@ public class SetConfig {
         }
         inv.setItem(16, preset8);
 
-        // Пресет 9: 3H
         ItemStack preset9 = new ItemStack(Material.BEACON);
         ItemMeta meta9 = preset9.getItemMeta();
         if (meta9 != null) {
@@ -517,7 +497,6 @@ public class SetConfig {
         String title = ChatColor.DARK_AQUA + getLocalizedMessage("tasks_category_title") + " • " + prettyDifficulty(difficulty);
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
-        // украшаем стеклом
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fm = filler.getItemMeta();
         if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
@@ -597,7 +576,6 @@ public class SetConfig {
         String title = ChatColor.DARK_BLUE + getLocalizedMessage("task_list_title", category) + " • " + prettyDifficulty(difficulty);
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
-        // фон
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fm = filler.getItemMeta();
         if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
@@ -660,12 +638,11 @@ public class SetConfig {
             }
         }
 
-        // кнопка добавления и назад
         inv.setItem(18, createItem(Material.BARRIER, ChatColor.RED + getLocalizedMessage("back")));
         inv.setItem(26, createItem(Material.EMERALD_BLOCK, ChatColor.GREEN + getLocalizedMessage("add_task_button")));
 
         player.openInventory(inv);
-    }
+                }
 
     private ItemStack createTaskIcon(String category, String value) {
         Material mat;
@@ -722,13 +699,10 @@ public class SetConfig {
     private String parseDifficultyFromTitle(String title) {
         if (title == null) return null;
         String stripped = ChatColor.stripColor(title);
-        // Format: "Задачи {category} • {difficulty}" or "Tasks {category} • {difficulty}"
-        // Check if title contains "•" separator
         if (stripped.contains("•")) {
             String[] parts = stripped.split("•", 2);
             if (parts.length == 2) {
                 String tail = parts[1].trim();
-                // Check both localized and hardcoded difficulty names
                 String easyLocalized = getLocalizedMessage("easy");
                 String mediumLocalized = getLocalizedMessage("medium");
                 String hardLocalized = getLocalizedMessage("hard");
@@ -771,7 +745,6 @@ public class SetConfig {
 
         if (slot == 18) {
             player.closeInventory();
-            // Small delay to ensure inventory closes before opening new one
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 openCategoryMenu(player, difficulty);
             }, 1L);
@@ -779,7 +752,6 @@ public class SetConfig {
         }
         if (slot == 26) {
             player.closeInventory();
-            // Small delay to ensure inventory closes before opening anvil
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 openAddAnvil(player, difficulty, category, 0, null);
             }, 1L);
@@ -789,17 +761,13 @@ public class SetConfig {
     private String parseCategoryFromTitle(String title) {
         if (title == null) return null;
         String stripped = ChatColor.stripColor(title);
-        // Format: "Задачи {category} • {difficulty}" or "Tasks {category} • {difficulty}"
-        // Check if title starts with "Задачи " or "Tasks "
         if (stripped.startsWith("Задачи ") || stripped.startsWith("Tasks ")) {
-            // Split by "•" first to separate category from difficulty
             String[] mainParts = stripped.split("•", 2);
             if (mainParts.length > 0) {
                 String categoryPart = mainParts[0].trim();
-                // Now split category part by spaces
                 String[] parts = categoryPart.split(" ");
                 if (parts.length >= 2) {
-                    return parts[1]; // english category (second word after "Задачи" or "Tasks")
+                    return parts[1];
                 }
             }
         }
@@ -836,7 +804,7 @@ public class SetConfig {
         PendingAdd pending = pendingAdds.get(player.getUniqueId());
         if (pending == null) return;
 
-        if (event.getRawSlot() != 2) return; // result slot
+        if (event.getRawSlot() != 2) return;
         ItemStack result = event.getCurrentItem();
         if (result == null || !result.hasItemMeta()) return;
         String input = result.getItemMeta().getDisplayName().trim();
@@ -847,7 +815,6 @@ public class SetConfig {
         try {
             if ("enchant".equals(pending.category)) {
                 if (pending.step == 0) {
-                    // получили название предмета
                     openAddAnvil(player, pending.difficulty, pending.category, 1, input.toLowerCase());
                     return;
                 } else {

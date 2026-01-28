@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import java.util.*;
+import me.example.huntervsspeedrunner.utils.I18n;
 
 public class InventoryTask implements Listener {
     private final RandomTaskManager taskManager;
@@ -16,8 +17,12 @@ public class InventoryTask implements Listener {
     public Task generate(Player player, List<String> items, int count) {
         Random random = new Random();
         String selectedItem = items.get(random.nextInt(items.size()));
+        Material material = Material.getMaterial(selectedItem.toUpperCase());
+        String itemName = (material != null)
+                ? I18n.materialName(taskManager.getMainPlugin(), material)
+                : I18n.taskName(taskManager.getMainPlugin(), "materials", selectedItem.toLowerCase());
 
-        String taskDescription = "Collect " + count + "x " + selectedItem;
+        String taskDescription = I18n.msg(taskManager.getMainPlugin(), "task_collect", count, itemName);
         return new Task(taskDescription, p -> updateProgress(p, selectedItem, count));
     }
 

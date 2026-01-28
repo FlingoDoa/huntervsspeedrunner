@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import me.example.huntervsspeedrunner.utils.I18n;
 
 public class KillTask implements Listener {
     private final RandomTaskManager taskManager;
@@ -24,13 +25,15 @@ public class KillTask implements Listener {
     public Task generate(Player player, List<String> mobs, int amount) {
         if (player == null) {
             String targetMob = mobs.get(0).toUpperCase();
-            String taskDescription = "Kill " + amount + " " + targetMob;
+            String mobName = I18n.taskName(taskManager.getMainPlugin(), "mobs", targetMob.toLowerCase());
+            String taskDescription = I18n.msg(taskManager.getMainPlugin(), "task_kill", amount, mobName);
             return new Task(taskDescription, p -> false);
         }
         String targetMob = mobs.get(0).toUpperCase();
         activeKillTasks.put(player.getUniqueId(), new KillTaskData(targetMob, amount, 0));
 
-        String taskDescription = "Kill " + amount + " " + targetMob;
+        String mobName = I18n.taskName(taskManager.getMainPlugin(), "mobs", targetMob.toLowerCase());
+        String taskDescription = I18n.msg(taskManager.getMainPlugin(), "task_kill", amount, mobName);
         taskManager.startTaskChecking(player, new Task(taskDescription, p -> hasKilledEnough(p)));
 
         return new Task(taskDescription, p -> hasKilledEnough(p));

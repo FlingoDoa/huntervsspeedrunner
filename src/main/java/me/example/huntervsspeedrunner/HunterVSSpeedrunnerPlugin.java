@@ -47,7 +47,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
     public void onEnable() {
         getLogger().info("Plugin loaded successfully!");
         this.saveDefaultConfig();
-
+        
         String webhookUrl = ErrorReporter.decryptWebhookUrl();
         this.reporter = new ErrorReporter(this, webhookUrl);
         
@@ -281,22 +281,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
             return true;
         }
 
-        if (command.getName().equalsIgnoreCase("huntertestwebhook")) {
-            if (!sender.isOp()) {
-                sender.sendMessage(getMessage("no_permission"));
-                return true;
-            }
-            if (reporter == null || !reporter.isWebhookConfigured()) {
-                getLogger().warning("Webhook test command executed but webhook is not configured!");
-                sender.sendMessage("§cWebhook не настроен (ошибка расшифровки).");
-                return true;
-            }
-            String msg = (args.length > 0) ? String.join(" ", args) : "Ручной тест вебхука";
-            getLogger().info("Executing webhook test command with message: " + msg);
-            reporter.reportTest(msg);
-            sender.sendMessage("§aТестовое сообщение отправлено в вебхук (если включен Erroreporter). Проверьте консоль для деталей.");
-            return true;
-        }
 
         return false;
     }

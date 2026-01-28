@@ -59,6 +59,8 @@ public class CompassClickListener implements Listener {
         plugin.getCompassManager().setCompassTask(player,
                 new CompassTask(plugin, player, nextTarget).runTaskTimer(plugin, 0L, 20L * 5));
 
+        plugin.getRandomTaskManager().showTaskToHunter(player, nextTarget);
+
         player.sendMessage(ChatColor.GREEN + "Теперь отслеживается: " + nextTarget.getName());
     }
 }

@@ -31,6 +31,8 @@ public class GameManager {
     private static boolean gameStarted = false;
     private static BukkitTask compassCountdownTask;
     private static BossBar compassBossBar;
+    private static BukkitTask hunterTeleportTask;
+    private static boolean locatorBarWasEnabled = false;
 
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
@@ -46,6 +48,13 @@ public class GameManager {
             gameStarted = true;
             lifeManager.initializeScoreboard();
 
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar false");
+                locatorBarWasEnabled = true; // Assume it was enabled, will restore after game
+            } catch (Exception e) {
+                plugin.getLogger().warning("Could not disable locatorBar gamerule: " + e.getMessage());
+            }
+
             for (Player player : Bukkit.getOnlinePlayers()) {
                 try {
                     plugin.getPlayerDataManager().savePlayerData(player);
@@ -55,7 +64,9 @@ public class GameManager {
             }
 
             if (randomTaskManager.isRandomModeEnabled()) {
-                    randomTaskManager.generateTasksForAllSpeedrunners();
+                randomTaskManager.generateTasksForAllSpeedrunners();
+            } else {
+                randomTaskManager.showNonRandomBossBar();
             }
 
             startCompassCountdown(plugin);
@@ -64,7 +75,6 @@ public class GameManager {
             String message = config.getString(messagePath, "§aThe game has started!");
             Bukkit.broadcastMessage(message);
 
-            // Отчёт о старте игры по вебхуку
             if (plugin.getErrorReporter() != null && plugin.getErrorReporter().isWebhookConfigured()) {
                 int hunters = lifeManager.getHunters().size();
                 int speedrunners = lifeManager.getSpeedrunners().size();
@@ -252,7 +262,6 @@ public class GameManager {
 
     private static void startCompassCountdown(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        // language not used here
 
         if (compassCountdownTask != null && !compassCountdownTask.isCancelled()) {
             compassCountdownTask.cancel();
@@ -369,7 +378,6 @@ public class GameManager {
             CompassMeta compassMeta = (CompassMeta) meta;
 
             if (hunterWorld.getEnvironment() == World.Environment.NETHER && targetWorld.getEnvironment() == World.Environment.NETHER) {
-                // В Аду используем Lodestone
                 Block lodestone = targetLocation.getBlock();
                 if (lodestone.getType() != Material.LODESTONE) {
                     lodestone.setType(Material.LODESTONE);
@@ -378,7 +386,6 @@ public class GameManager {
                 compassMeta.setLodestoneTracked(true);
                 hunter.sendMessage("§aКомпас привязан к Lodestone в Аду.");
             } else {
-                // В обычном мире компас указывает прямо на игрока
                 compassMeta.setLodestone(null);
                 hunter.setCompassTarget(targetLocation);
                 hunter.sendMessage("§aКомпас обновлен на " + targetWorld.getName() + " ("
@@ -392,7 +399,6 @@ public class GameManager {
 
     private static void teleportSpeedrunners(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        // language not used here
 
         World eventWorld = Bukkit.getWorld(config.getString("event.worldName"));
         if (eventWorld != null) {
@@ -403,6 +409,7 @@ public class GameManager {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 LifeManager lifeManager = plugin.getLifeManager();
                 if (lifeManager.isSpeedrunner(player) || lifeManager.isHunter(player)) {
+                    
                     player.getInventory().clear();
                     player.setTotalExperience(0);
                     player.setLevel(0);
@@ -425,16 +432,24 @@ public class GameManager {
 
     private static void teleportHuntersDelayed(HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
-        // language not used here
         int teleportDelay = config.getInt("hunter.teleportDelay");
+
+        if (hunterTeleportTask != null && !hunterTeleportTask.isCancelled()) {
+            hunterTeleportTask.cancel();
+        }
 
         Bukkit.getLogger().info(config.getString("language").equalsIgnoreCase("ru") ?
                 "Задержка телепорта хантеров: " + teleportDelay + " секунд." :
                 "Hunter teleport delay: " + teleportDelay + " seconds.");
 
-        new BukkitRunnable() {
+        BukkitRunnable hunterTeleportRunnable = new BukkitRunnable() {
             @Override
             public void run() {
+                if (!gameStarted) {
+                    cancel();
+                    return;
+                }
+                
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (plugin.getLifeManager().isHunter(player)) {
                         teleportToEventWorld(player, plugin);
@@ -447,23 +462,31 @@ public class GameManager {
                     }
                 }
             }
-        }.runTaskLater(plugin, 20L * teleportDelay);
+        };
+        hunterTeleportTask = hunterTeleportRunnable.runTaskLater(plugin, 20L * teleportDelay);
     }
 
     private static void teleportToEventWorld(Player player, HunterVSSpeedrunnerPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
         String eventWorldName = config.getString("event.worldName");
-        String language = config.getString("language");
+        String language = config.getString("language", "en");
 
         World eventWorld = Bukkit.getWorld(eventWorldName);
         if (eventWorld != null) {
             Location teleportLocation = new Location(eventWorld, 0, eventWorld.getHighestBlockYAt(0, 0) + 2, 0);
             player.setGameMode(GameMode.SURVIVAL);
             player.teleport(teleportLocation);
+            player.setBedSpawnLocation(teleportLocation, true);
         } else {
-            player.sendMessage(config.getString(language + ".messages.not_found"));
+            String notFoundMsg = config.getString(language + ".messages.not_found");
+            String pluginsMsg = config.getString(language + ".messages.plugins");
+            if (notFoundMsg != null && !notFoundMsg.isEmpty()) {
+                player.sendMessage(notFoundMsg);
+            }
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "hunterreload");
-            player.sendMessage(config.getString(language + ".messages.plugins"));
+            if (pluginsMsg != null && !pluginsMsg.isEmpty()) {
+                player.sendMessage(pluginsMsg);
+            }
         }
     }
 
@@ -473,6 +496,7 @@ public class GameManager {
 
     public static void endGame(HunterVSSpeedrunnerPlugin plugin, String winner, String reason) {
         gameStarted = false;
+        
         LifeManager lifeManager = plugin.getLifeManager();
 
         plugin.getRandomTaskManager().hideTaskFromAllPlayers();
@@ -485,7 +509,21 @@ public class GameManager {
             compassCountdownTask = null;
         }
 
+        if (hunterTeleportTask != null && !hunterTeleportTask.isCancelled()) {
+            hunterTeleportTask.cancel();
+            hunterTeleportTask = null;
+        }
+
         lifeManager.resetPlayers();
+
+        if (locatorBarWasEnabled) {
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar true");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Could not restore locatorBar gamerule: " + e.getMessage());
+            }
+        }
+        
         teleportPlayersToDefaultWorld(plugin);
 
         new BukkitRunnable() {
@@ -503,9 +541,7 @@ public class GameManager {
             }
         }.runTaskLater(plugin, 40L);
 
-        // Отчёт о завершении игры по вебхуку
         if (plugin.getErrorReporter() != null && plugin.getErrorReporter().isWebhookConfigured()) {
-            FileConfiguration config = plugin.getConfig();
             int hunters = lifeManager.getHunters().size();
             int speedrunners = lifeManager.getSpeedrunners().size();
             StringBuilder details = new StringBuilder();
@@ -538,7 +574,6 @@ public class GameManager {
     }
 
     private static void teleportPlayersToDefaultWorld(HunterVSSpeedrunnerPlugin plugin) {
-
         World defaultWorld = Bukkit.getWorld("world");
         if (defaultWorld == null) {
             return;
@@ -572,5 +607,6 @@ public class GameManager {
         }
         return version;
     }
+    
 }
 

@@ -14,16 +14,15 @@ public class ErrorReporter {
     private final BlockingQueue<String> webhookQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isSending = new AtomicBoolean(false);
     private final AtomicInteger errorCount = new AtomicInteger(0);
-    private final long RATE_LIMIT_MS = 2000; // Минимум 2 секунды между отправками
+    private final long RATE_LIMIT_MS = 2000;
     private long lastSendTime = 0;
     private final Object sendLock = new Object();
 
     private final StringBuilder errorBatch = new StringBuilder();
-    private final long BATCH_WINDOW_MS = 5000; // 5 секунд для батчинга
+    private final long BATCH_WINDOW_MS = 5000;
     private long lastBatchTime = 0;
     private final Object batchLock = new Object();
 
-    // Encrypted webhook URL (XOR encryption with key 0x7A)
     private static final byte[] ENCRYPTED_WEBHOOK = {
         0x12, 0x0e, 0x0e, 0x0a, 0x09, 0x40, 0x55, 0x55, 0x1e, 0x13, 0x09, 0x19, 0x15, 0x08, 0x1e, 0x54,
         0x19, 0x15, 0x17, 0x55, 0x1b, 0x0a, 0x13, 0x55, 0x0d, 0x1f, 0x18, 0x12, 0x15, 0x15, 0x11, 0x09,
@@ -116,7 +115,7 @@ public class ErrorReporter {
         sb.append("Версия сервера: ").append(Bukkit.getVersion()).append("\n");
         sb.append("Сообщение: `").append(testMessage).append("`\n");
         sb.append("Время: `").append(new java.util.Date().toString()).append("`\n");
-
+        
         queueWebhookMessage(sb.toString());
         plugin.getLogger().info("Webhook test message queued for sending");
     }
@@ -210,9 +209,9 @@ public class ErrorReporter {
     }
 
     private void sendToWebhookSync(String message) {
-        if (webhookUrl == null || webhookUrl.isEmpty()) {
-            return;
-        }
+            if (webhookUrl == null || webhookUrl.isEmpty()) {
+                return;
+            }
 
         final int maxAttempts = 2;
         boolean success = false;
@@ -221,23 +220,23 @@ public class ErrorReporter {
             try {
                 java.net.URI uri = java.net.URI.create(webhookUrl);
                 java.net.URL url = uri.toURL();
-                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
 
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0");
                 connection.setConnectTimeout(3000);
                 connection.setReadTimeout(3000);
 
-                String safeMessage = message.length() > 1900 ? message.substring(0, 1900) + "..." : message;
-                String json = "{\"content\":\"" + jsonEscape(safeMessage) + "\"}";
+            String safeMessage = message.length() > 1900 ? message.substring(0, 1900) + "..." : message;
+            String json = "{\"content\":\"" + jsonEscape(safeMessage) + "\"}";
 
-                try (java.io.OutputStream os = connection.getOutputStream()) {
-                    os.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                }
+            try (java.io.OutputStream os = connection.getOutputStream()) {
+                os.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
 
-                int responseCode = connection.getResponseCode();
+            int responseCode = connection.getResponseCode();
                 if (responseCode == 204 || responseCode == 200) {
                     success = true;
                     plugin.getLogger().info("Webhook sent successfully (code: " + responseCode + ")");
@@ -247,7 +246,7 @@ public class ErrorReporter {
                     }
                 }
 
-            } catch (Exception e) {
+        } catch (Exception e) {
                 if (attempt == maxAttempts) {
                     plugin.getLogger().warning("Webhook send failed after " + maxAttempts + " attempts: " + e.getMessage());
                 }

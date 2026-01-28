@@ -228,8 +228,7 @@ medium:
 hard:
   inventory:
     1: "obsidian"
-    2: "bedrock"
-    3: "netherite_ingot"
+    2: "netherite_ingot"
     4: "dragon_egg"
     5: "beacon"
     6: "end_portal_frame"

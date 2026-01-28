@@ -86,8 +86,16 @@ public class PlayerDataManager {
 
         config.set("exp", player.getTotalExperience());
 
-        if (player.getBedSpawnLocation() != null) {
-            config.set("old_spawn", player.getBedSpawnLocation());
+        config.set("gamemode", player.getGameMode().name());
+
+        Location originalBedSpawn = player.getBedSpawnLocation();
+        if (originalBedSpawn != null) {
+            config.set("old_spawn", originalBedSpawn);
+        } else {
+            World world = player.getWorld();
+            if (world != null) {
+                config.set("old_spawn", world.getSpawnLocation());
+            }
         }
 
         try {
@@ -139,12 +147,14 @@ public class PlayerDataManager {
             }
         }
         if (config.contains("achievements") && config.getConfigurationSection("achievements") != null) {
+            // Restore achievements silently (without chat messages)
             for (String key : config.getConfigurationSection("achievements").getKeys(false)) {
                 boolean achieved = config.getBoolean("achievements." + key);
                 if (achieved) {
                     Advancement advancement = Bukkit.getAdvancement(NamespacedKey.minecraft(key));
                     if (advancement != null) {
                         AdvancementProgress progress = player.getAdvancementProgress(advancement);
+                        // Award all remaining criteria at once to minimize messages
                         for (String criteria : progress.getRemainingCriteria()) {
                             progress.awardCriteria(criteria);
                         }
@@ -154,9 +164,39 @@ public class PlayerDataManager {
         }
         if (config.contains("old_spawn")) {
             Location oldSpawn = config.getLocation("old_spawn");
-            player.setBedSpawnLocation(oldSpawn, true);
+            if (oldSpawn != null && oldSpawn.getWorld() != null) {
+                World spawnWorld = Bukkit.getWorld(oldSpawn.getWorld().getName());
+                if (spawnWorld != null) {
+                    Location restoredSpawn = new Location(spawnWorld, oldSpawn.getX(), oldSpawn.getY(), oldSpawn.getZ());
+                    player.setBedSpawnLocation(restoredSpawn, true);
+                } else {
+                    World defaultWorld = Bukkit.getWorld("world");
+                    if (defaultWorld != null) {
+                        player.setBedSpawnLocation(defaultWorld.getSpawnLocation(), true);
+                    }
+                }
+            } else {
+                World defaultWorld = Bukkit.getWorld("world");
+                if (defaultWorld != null) {
+                    player.setBedSpawnLocation(defaultWorld.getSpawnLocation(), true);
+                }
+            }
+        } else {
+            World world = Bukkit.getWorld("world");
+            if (world != null) {
+                player.setBedSpawnLocation(world.getSpawnLocation(), true);
+            }
         }
 
         player.setTotalExperience(config.getInt("exp"));
+
+        if (config.contains("gamemode")) {
+            try {
+                org.bukkit.GameMode gameMode = org.bukkit.GameMode.valueOf(config.getString("gamemode"));
+                player.setGameMode(gameMode);
+            } catch (IllegalArgumentException e) {
+                player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            }
+        }
     }
 }

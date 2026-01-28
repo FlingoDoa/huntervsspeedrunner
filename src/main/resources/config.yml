@@ -1,7 +1,7 @@
 language: "en" # "ru" or "en"
 Erroreporter: true # "true" or "false"
-version: 1.75 #DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
-plugin_version: "1.751-1.21.1" # Plugin version for webhook reports / Версия плагина для отчетов вебхука
+version: 1.8 #DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
+plugin_version: "1.8b-1.21.1" # Plugin version for webhook reports / Версия плагина для отчетов вебхука
 
 # Настройки рандомных заданий
 random_tasks:
@@ -163,6 +163,44 @@ en:
     preset_1h2e: "1H + 2E"
     preset_3m: "3M"
     preset_3h: "3H"
+    kill_ender_dragon: "KILL ENDER DRAGON"
+    # Random task bossbar templates
+    task_collect: "Collect %d× %s"
+    task_kill: "Kill %d× %s"
+    task_effects: "Gain effects: %s"
+    task_achievements: "Unlock achievements: %s"
+    task_enchant: "Enchant %s with: %s"
+
+  # Names used inside random task descriptions (you can extend this list)
+  task_names:
+    materials:
+      unknown: "Unknown"
+      diamond_pickaxe: "Diamond Pickaxe"
+      diamond_sword: "Diamond Sword"
+      diamond_axe: "Diamond Axe"
+      diamond_shovel: "Diamond Shovel"
+      diamond_hoe: "Diamond Hoe"
+      enchanting_table: "Enchanting Table"
+    mobs:
+      zombie: "Zombie"
+      skeleton: "Skeleton"
+      spider: "Spider"
+      creeper: "Creeper"
+      cow: "Cow"
+      pig: "Pig"
+      sheep: "Sheep"
+      chicken: "Chicken"
+      drowned: "Drowned"
+      rabbit: "Rabbit"
+    effects:
+      invisibility: "Invisibility"
+    enchants:
+      efficiency: "Efficiency"
+      unbreaking: "Unbreaking"
+      fortune: "Fortune"
+      silk_touch: "Silk Touch"
+    advancements:
+      story/obtain_armor: "Obtain Armor"
 ru:
   menu:
     toggle_random:
@@ -308,3 +346,41 @@ ru:
     preset_1h2e: "1H + 2E"
     preset_3m: "3M"
     preset_3h: "3H"
+    kill_ender_dragon: "УБИТЬ ЭНДЕР ДРАКОНА"
+    # Шаблоны текста рандомных заданий (боссбар)
+    task_collect: "Собрать %d× %s"
+    task_kill: "Убить %d× %s"
+    task_effects: "Получить эффекты: %s"
+    task_achievements: "Получить достижения: %s"
+    task_enchant: "Зачаровать %s на: %s"
+
+  # Названия, используемые в описаниях заданий (можно расширять)
+  task_names:
+    materials:
+      unknown: "Неизвестно"
+      diamond_pickaxe: "Алмазная кирка"
+      diamond_sword: "Алмазный меч"
+      diamond_axe: "Алмазный топор"
+      diamond_shovel: "Алмазная лопата"
+      diamond_hoe: "Алмазная мотыга"
+      enchanting_table: "Стол зачарований"
+    mobs:
+      zombie: "Зомби"
+      skeleton: "Скелет"
+      spider: "Паук"
+      creeper: "Крипер"
+      cow: "Корова"
+      pig: "Свинья"
+      sheep: "Овца"
+      chicken: "Курица"
+      drowned: "Утопленник"
+      rabbit: "Кролик"
+    effects:
+      invisibility: "Невидимость"
+    enchants:
+      efficiency: "Эффективность"
+      unbreaking: "Прочность"
+      fortune: "Удача"
+      silk_touch: "Шёлковое касание"
+    advancements:
+      story/obtain_armor: "Надеть броню"
