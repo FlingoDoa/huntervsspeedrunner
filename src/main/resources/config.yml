@@ -1,7 +1,7 @@
 language: "en" # "ru" or "en"
 Erroreporter: true # "true" or "false"
-version: 1.8 #DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
-plugin_version: "1.8b-1.21.1" # Plugin version for webhook reports / Версия плагина для отчетов вебхука
+version: 1.81 #DO NOT CHANGE THIS PARAMETER / НЕ ИЗМЕНЯТЬ ЭТОТ ПАРАМЕТР
+plugin_version: "1.81r-1.21.1" # Plugin version for webhook reports / Версия плагина для отчетов вебхука
 
 # Настройки рандомных заданий
 random_tasks:

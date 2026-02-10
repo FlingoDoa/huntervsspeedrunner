@@ -1,5 +1,5 @@
 name: huntervsspeedrunner
-version: '1.80'
+version: '1.81'
 main: me.example.huntervsspeedrunner.HunterVSSpeedrunnerPlugin
 api-version: '1.21'
 folia-supported: false

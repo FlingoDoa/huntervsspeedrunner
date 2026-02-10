@@ -50,33 +50,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         
         String webhookUrl = ErrorReporter.decryptWebhookUrl();
         this.reporter = new ErrorReporter(this, webhookUrl);
-        
-        System.setErr(new java.io.PrintStream(new java.io.OutputStream() {
-            private final StringBuilder buffer = new StringBuilder();
-            @Override
-            public void write(int b) {
-                if (b == '\n') {
-                    reporter.report(new Exception(buffer.toString()), "System.err");
-                    buffer.setLength(0);
-                } else {
-                    buffer.append((char) b);
-                }
-            }
-        }));
 
-        System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
-            private final StringBuilder buffer = new StringBuilder();
-            @Override
-            public void write(int b) {
-                if (b == '\n') {
-                    reporter.report(new Exception(buffer.toString()), "System.out");
-                    buffer.setLength(0);
-                } else {
-                    buffer.append((char) b);
-                }
-            }
-        }));
-        
         new Feedback(this).forceUpdateIfNeeded();
         initializeManagers();
         registerListeners();
@@ -87,7 +61,10 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BossBarJoinListener(randomTaskManager), this);
         
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            this.reporter.report(new Exception(throwable), "Необработанная ошибка в потоке: " + thread.getName());
+            if (isFromOurPlugin(throwable)) {
+                this.reporter.report(throwable instanceof Exception ? (Exception) throwable : new Exception(throwable),
+                    "Необработанная ошибка в потоке: " + thread.getName());
+            }
         });
     }
 
@@ -141,6 +118,18 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         if (getCommand("hunterreload") != null) {
             getCommand("hunterreload").setExecutor(this);
         }
+    }
+
+    /** Проверяет, что исключение возникло в коде нашего плагина (для вебхука только свои ошибки). */
+    private static boolean isFromOurPlugin(Throwable throwable) {
+        String ourPackage = "me.example.huntervsspeedrunner";
+        for (StackTraceElement el : throwable.getStackTrace()) {
+            if (el.getClassName() != null && el.getClassName().startsWith(ourPackage)) {
+                return true;
+            }
+        }
+        Throwable cause = throwable.getCause();
+        return cause != null && isFromOurPlugin(cause);
     }
 
     public LifeManager getLifeManager() {
@@ -303,7 +292,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         }
         FileConfiguration config = getConfig();
         String eventWorldName = config.getString("event.worldName");
-        World mainWorld = Bukkit.getWorld("world"); // Основной мир
+        World mainWorld = Bukkit.getWorld("world");
 
         if (mainWorld == null) {
             player.sendMessage("Main world 'world' not found. Please ensure it exists.");
