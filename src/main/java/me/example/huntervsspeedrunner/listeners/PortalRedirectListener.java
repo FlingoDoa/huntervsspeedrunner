@@ -15,7 +15,7 @@ import java.util.Map;
 public class PortalRedirectListener implements Listener {
 
     private final HunterVSSpeedrunnerPlugin plugin;
-    private final Map<String, Location> endPlatformLocations; // Хранит локации платформ для каждого мира
+    private final Map<String, Location> endPlatformLocations;
 
     public PortalRedirectListener(HunterVSSpeedrunnerPlugin plugin) {
         this.plugin = plugin;
@@ -75,12 +75,10 @@ public class PortalRedirectListener implements Listener {
     }
 
     private Location getOrCreateEndPlatformLocation(World endWorld) {
-        // Проверяем, есть ли уже сохраненная локация для этого мира
         if (endPlatformLocations.containsKey(endWorld.getName())) {
             return endPlatformLocations.get(endWorld.getName());
         }
 
-        // Если нет - создаем новую и сохраняем
         Location platformLocation = locateEndPlatformLocation(endWorld);
         createEndPlatform(platformLocation);
         endPlatformLocations.put(endWorld.getName(), platformLocation);
@@ -90,7 +88,7 @@ public class PortalRedirectListener implements Listener {
     private Location findOrCreatePortal(World targetWorld, Location fromLocation) {
         Vector scaledCoords = scaleCoordinates(fromLocation, targetWorld.getEnvironment());
         Location targetLocation = new Location(targetWorld, scaledCoords.getX(), scaledCoords.getY(), scaledCoords.getZ());
-        Location nearestPortal = targetWorld.getBlockAt(targetLocation).getLocation(); // Упростите или добавьте поиск порталов
+        Location nearestPortal = targetWorld.getBlockAt(targetLocation).getLocation();
         if (nearestPortal != null) {
             return nearestPortal;
         }

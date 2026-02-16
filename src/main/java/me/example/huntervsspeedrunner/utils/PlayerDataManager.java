@@ -147,14 +147,12 @@ public class PlayerDataManager {
             }
         }
         if (config.contains("achievements") && config.getConfigurationSection("achievements") != null) {
-            // Restore achievements silently (without chat messages)
             for (String key : config.getConfigurationSection("achievements").getKeys(false)) {
                 boolean achieved = config.getBoolean("achievements." + key);
                 if (achieved) {
                     Advancement advancement = Bukkit.getAdvancement(NamespacedKey.minecraft(key));
                     if (advancement != null) {
                         AdvancementProgress progress = player.getAdvancementProgress(advancement);
-                        // Award all remaining criteria at once to minimize messages
                         for (String criteria : progress.getRemainingCriteria()) {
                             progress.awardCriteria(criteria);
                         }

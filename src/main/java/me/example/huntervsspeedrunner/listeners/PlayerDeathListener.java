@@ -59,8 +59,7 @@ public class PlayerDeathListener implements Listener {
             if (lifeManager.getPlayerLives(player) <= 0) {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.sendMessage(ChatColor.RED + config.getString(path + "out_of_lives"));
-                
-                // Transfer tasks from dead speedrunner to alive speedrunners
+
                 if (plugin.getRandomTaskManager().isRandomModeEnabled()) {
                     plugin.getRandomTaskManager().transferTasksFromDeadSpeedrunner(player);
                 }

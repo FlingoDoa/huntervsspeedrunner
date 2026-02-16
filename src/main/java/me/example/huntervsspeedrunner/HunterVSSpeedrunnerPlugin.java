@@ -35,13 +35,14 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     private LifeManager lifeManager;
     private GameManager gameManager;
-    private boolean isMenuOpen = false;
     private BossBar bossBar;
     private RandomTaskManager randomTaskManager;
     private CompassManager compassManager;
     private PlayerDataManager playerDataManager;
     private SetConfig setConfig;
     private ErrorReporter reporter;
+    private boolean worldRegenerating = false;
+    private int worldRegenDots = 0;
 
     @Override
     public void onEnable() {
@@ -78,6 +79,25 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
     public SetConfig getSetConfig() {
         return setConfig;
+    }
+
+    public boolean isWorldRegenerating() {
+        return worldRegenerating;
+    }
+
+    public int getWorldRegenDots() {
+        return worldRegenDots;
+    }
+
+    public void setWorldRegenerating(boolean worldRegenerating) {
+        this.worldRegenerating = worldRegenerating;
+        if (!worldRegenerating) {
+            this.worldRegenDots = 0;
+        }
+    }
+
+    public void tickWorldRegenDots() {
+        this.worldRegenDots = (worldRegenDots + 1) % 3;
     }
 
     private void initializeManagers() {
@@ -140,14 +160,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         return gameManager;
     }
 
-    public boolean isMenuOpen() {
-        return isMenuOpen;
-    }
-
-    public void setMenuOpen(boolean menuOpen) {
-        this.isMenuOpen = menuOpen;
-    }
-
     public ItemStack getCompassItem() {
         FileConfiguration config = this.getConfig();
         String materialName = config.getString("hunter.compass.item");
@@ -184,12 +196,7 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                     if (GameManager.isGameStarted()) {
                         player.sendMessage(getMessage("game_started"));
                     } else {
-                        if (!isMenuOpen()) {
-                            setMenuOpen(true);
-                            GameManager.openTeamSelectionMenu(player, this);
-                        } else {
-                            player.sendMessage(getMessage("menu_closed"));
-                        }
+                        GameManager.openTeamSelectionMenu(player, this);
                     }
                 } else {
                     sender.sendMessage(getMessage("only_players"));
@@ -281,7 +288,6 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
 
         reloadConfig();
         new Feedback(this).forceUpdateIfNeeded();
-        setMenuOpen(false);
 
         getLogger().info("Плагин успешно перезагружен!");
     }
@@ -300,6 +306,10 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
         }
 
         player.sendMessage("Starting world regeneration...");
+
+        setWorldRegenerating(true);
+        worldRegenDots = 0;
+        GameManager.updateEventWorldStatusInOpenMenus(this);
 
         bossBar = Bukkit.createBossBar("Processing commands...", BarColor.GREEN, BarStyle.SEGMENTED_10);
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
@@ -365,17 +375,23 @@ public class HunterVSSpeedrunnerPlugin extends JavaPlugin {
                             bossBar.removeAll();
                             bossBar = null;
                             player.sendMessage("World regeneration completed.");
+                            setWorldRegenerating(false);
+                            GameManager.updateEventWorldStatusInOpenMenus(HunterVSSpeedrunnerPlugin.this);
                             cancel();
                             return;
                     }
 
                     bossBar.setProgress((double) step / 4);
                     bossBar.setTitle("Processing step " + (step + 1) + " of 5...");
+                    tickWorldRegenDots();
+                    GameManager.updateEventWorldStatusInOpenMenus(HunterVSSpeedrunnerPlugin.this);
                     step++;
                 } catch (Exception e) {
                     player.sendMessage("An error occurred during world regeneration: " + e.getMessage());
                     bossBar.removeAll();
                     bossBar = null;
+                    setWorldRegenerating(false);
+                    GameManager.updateEventWorldStatusInOpenMenus(HunterVSSpeedrunnerPlugin.this);
                     cancel();
                 }
             }

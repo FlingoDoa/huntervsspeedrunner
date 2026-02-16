@@ -47,7 +47,6 @@ public class MenuListener implements Listener {
                 plugin.getSetConfig().handleDetailedDifficultyClick(event);
                 return;
             }
-            // Меню выбора категории задач по сложности
             String strippedTitle2 = ChatColor.stripColor(title);
             String categoryTitle = getLocalizedMessage("tasks_category_title");
             if (strippedTitle2.startsWith("Задания •") || strippedTitle2.startsWith(categoryTitle + " •") || strippedTitle2.startsWith("Tasks •")) {
@@ -55,14 +54,12 @@ public class MenuListener implements Listener {
                 plugin.getSetConfig().handleCategoryMenuClick(event);
                 return;
             }
-            // Меню списка задач конкретной категории
             String strippedTitle = ChatColor.stripColor(title);
             if (strippedTitle.startsWith("Задачи ") || strippedTitle.startsWith("Tasks ")) {
                 event.setCancelled(true);
                 plugin.getSetConfig().handleTaskListClick(event);
                 return;
             }
-            // Наковальня добавления задач
             if (event.getView().getTopInventory().getType() == org.bukkit.event.inventory.InventoryType.ANVIL
                     && (ChatColor.stripColor(title).startsWith("Добавить ") || ChatColor.stripColor(title).startsWith("Add "))) {
                 event.setCancelled(true);
@@ -76,7 +73,9 @@ public class MenuListener implements Listener {
                 plugin.getSetConfig().handleScenarioPresetsClick(event);
                 return;
             }
-            if (!plugin.isMenuOpen()) {
+
+            String strippedMain = ChatColor.stripColor(title);
+            if (!"Select a Team".equals(strippedMain)) {
                 return;
             }
 
@@ -198,7 +197,6 @@ public class MenuListener implements Listener {
                 }
                 break;
             default:
-                player.sendMessage(ChatColor.RED + "Неизвестный слот: " + slot);
                 break;
         }
         } catch (Throwable e) {
@@ -210,9 +208,13 @@ public class MenuListener implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
-        if (plugin.isMenuOpen()) {
-            plugin.setMenuOpen(false);
-            player.sendMessage(plugin.getConfig().getString(plugin.getConfig().getString("language") + ".messages.menu_closed"));
+        String title = ChatColor.stripColor(event.getView().getTitle());
+        if ("Select a Team".equals(title)) {
+            String lang = plugin.getConfig().getString("language", "en");
+            String msg = plugin.getConfig().getString(lang + ".messages.menu_closed");
+            if (msg != null && !msg.isEmpty()) {
+                player.sendMessage(msg);
+            }
         }
     }
 

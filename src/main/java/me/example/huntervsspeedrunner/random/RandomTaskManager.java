@@ -209,7 +209,12 @@ public class RandomTaskManager implements Listener {
 
             switch (selectedCategory) {
                 case "inventory": {
-                    int count = random.nextInt(64) + 1;
+                    int count;
+                    if (random.nextDouble() < 0.8) {
+                        count = 1 + random.nextInt(16);
+                    } else {
+                        count = 17 + random.nextInt(16);
+                    }
                     String itemKey = taskKeys.get(random.nextInt(taskKeys.size()));
                     String item = taskSection.getString(itemKey);
 
@@ -218,7 +223,6 @@ public class RandomTaskManager implements Listener {
                         continue;
                     }
                     
-                    // Skip impossible items
                     String itemLower = item.toLowerCase();
                     if (itemLower.equals("bedrock") || 
                         itemLower.equals("command_block") || 
@@ -252,7 +256,12 @@ public class RandomTaskManager implements Listener {
                 }
 
                 case "kill": {
-                    int count = random.nextInt(40) + 1;
+                    int count;
+                    if (random.nextDouble() < 0.8) {
+                        count = 1 + random.nextInt(16);
+                    } else {
+                        count = 17 + random.nextInt(16);
+                    }
                     String mobKey = taskKeys.get(random.nextInt(taskKeys.size()));
                     String mob = taskSection.getString(mobKey);
 
@@ -269,7 +278,12 @@ public class RandomTaskManager implements Listener {
                 }
 
                 case "tnt": {
-                    int count = random.nextInt(40) + 1;
+                    int count;
+                    if (random.nextDouble() < 0.8) {
+                        count = 1 + random.nextInt(16);
+                    } else {
+                        count = 17 + random.nextInt(16);
+                    }
                     String mobKey = taskKeys.get(random.nextInt(taskKeys.size()));
                     String mob = taskSection.getString(mobKey);
 
@@ -346,7 +360,7 @@ public class RandomTaskManager implements Listener {
                     }
                     String item = itemSection.getString("name");
                     if (item == null) {
-                        item = enchantSection.getString(itemKey); // Fallback for old format
+                        item = enchantSection.getString(itemKey);
                     }
 
                     ConfigurationSection typeSection = itemSection.getConfigurationSection("type");
@@ -688,7 +702,7 @@ public class RandomTaskManager implements Listener {
 
         playerTasks.clear();
         playerScenarioIndex.clear();
-        playerScenarios.clear(); // Clear personal scenarios
+        playerScenarios.clear();
 
         for (BossBar bossBar : playerBossBars.values()) {
             bossBar.removeAll();
@@ -923,7 +937,7 @@ public class RandomTaskManager implements Listener {
         }
         
         Random random = new Random();
-        int tasksToTransfer = random.nextInt(remainingTasks + 1); // 0 to remainingTasks
+        int tasksToTransfer = random.nextInt(remainingTasks + 1); 
         
         if (tasksToTransfer == 0) {
             playerTasks.remove(deadId);

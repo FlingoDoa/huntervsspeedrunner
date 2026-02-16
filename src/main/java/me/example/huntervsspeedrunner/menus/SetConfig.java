@@ -25,6 +25,10 @@ public class SetConfig {
 
     public void openConfigMenu(Player player) {
         Inventory configMenu = Bukkit.createInventory(null, 27, ChatColor.DARK_GREEN + getLocalizedMessage("advanced_settings_title"));
+        ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta fm = filler.getItemMeta();
+        if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
+        for (int i = 0; i < 27; i++) configMenu.setItem(i, filler);
         FileConfiguration config = plugin.getConfig();
         String lang = config.getString("language", "en");
 
@@ -159,7 +163,6 @@ public class SetConfig {
                 currentSetting = "compassgive";
                 break;
             case 16:
-                // Открываем меню настроек рандомных заданий
                 player.closeInventory();
                 openDetailedDifficultyMenu(player);
                 shouldReopenMenu = false;
@@ -240,7 +243,7 @@ public class SetConfig {
                     player.sendMessage(ChatColor.RED + getLocalizedMessage("random_mode_disabled"));
                 }
                 break;
-            case 9: { // Добавить лёгкое в сценарий
+            case 9: { 
                 java.util.List<String> scenario = new java.util.ArrayList<>(config.getStringList("random_tasks.scenario"));
                 scenario.add("easy");
                 config.set("random_tasks.scenario", scenario);
@@ -335,7 +338,7 @@ public class SetConfig {
     public void openScenarioPresetsMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_AQUA + getLocalizedMessage("scenario_presets_title"));
 
-        ItemStack filler = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+        ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fm = filler.getItemMeta();
         if (fm != null) { fm.setDisplayName(" "); filler.setItemMeta(fm); }
         for (int i = 0; i < 27; i++) inv.setItem(i, filler);
@@ -451,31 +454,31 @@ public class SetConfig {
         FileConfiguration config = plugin.getConfig();
         java.util.List<String> scenario = new java.util.ArrayList<>();
         switch (slot) {
-            case 9: // 1H+1M+1E
+            case 9: 
                 scenario.add("hard"); scenario.add("medium"); scenario.add("easy");
                 break;
-            case 10: // 3E
+            case 10: 
                 scenario.add("easy"); scenario.add("easy"); scenario.add("easy");
                 break;
-            case 11: // 2M
+            case 11: 
                 scenario.add("medium"); scenario.add("medium");
                 break;
-            case 12: // 2H
+            case 12: 
                 scenario.add("hard"); scenario.add("hard");
                 break;
-            case 13: // 2E+1M
+            case 13: 
                 scenario.add("easy"); scenario.add("easy"); scenario.add("medium");
                 break;
-            case 14: // 1E+2M
+            case 14: 
                 scenario.add("easy"); scenario.add("medium"); scenario.add("medium");
                 break;
-            case 15: // 1H+2E
+            case 15: 
                 scenario.add("hard"); scenario.add("easy"); scenario.add("easy");
                 break;
-            case 16: // 3M
+            case 16: 
                 scenario.add("medium"); scenario.add("medium"); scenario.add("medium");
                 break;
-            case 17: // 3H
+            case 17: 
                 scenario.add("hard"); scenario.add("hard"); scenario.add("hard");
                 break;
             case 22:

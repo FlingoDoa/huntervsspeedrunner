@@ -22,6 +22,7 @@ import org.bukkit.Location;
 import net.md_5.bungee.api.ChatColor;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.File;
 
 
 
@@ -32,7 +33,7 @@ public class GameManager {
     private static BukkitTask compassCountdownTask;
     private static BossBar compassBossBar;
     private static BukkitTask hunterTeleportTask;
-    private static boolean locatorBarWasEnabled = false;
+    private static BukkitTask locatorBarTask;
 
 
     public static void startGame(HunterVSSpeedrunnerPlugin plugin) {
@@ -48,12 +49,21 @@ public class GameManager {
             gameStarted = true;
             lifeManager.initializeScoreboard();
 
-            try {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar false");
-                locatorBarWasEnabled = true; // Assume it was enabled, will restore after game
-            } catch (Exception e) {
-                plugin.getLogger().warning("Could not disable locatorBar gamerule: " + e.getMessage());
+            if (locatorBarTask != null && !locatorBarTask.isCancelled()) {
+                locatorBarTask.cancel();
             }
+            locatorBarTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar false");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Could not enforce locatorBar gamerule: " + e.getMessage());
+                        cancel();
+                        locatorBarTask = null;
+                    }
+                }
+            }.runTaskTimer(plugin, 0L, 100L);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 try {
@@ -123,7 +133,6 @@ public class GameManager {
         String randomModeStatus = randomEnabled ? ChatColor.GREEN + " ✅" : ChatColor.RED + " ❌";
         String compassStatus = compassEnabled ? ChatColor.GREEN + " ✅" : ChatColor.RED + " ❌";
 
-        // Создание предметов для меню
         ItemStack hunterItem = createTeamMenuItem(config, config.getString("language") + ".menu.hunter", plugin.getLifeManager().getHunters());
         inventory.setItem(6, hunterItem);
 
@@ -141,11 +150,11 @@ public class GameManager {
         ItemStack startItem = createMenuItem(config, config.getString("language") + ".menu.start", "");
         inventory.setItem(4, startItem);
 
-        // Новые кнопки
         ItemStack toggleRandomItem = createMenuItem(config, config.getString("language") + ".menu.toggle_random", randomModeStatus);
         inventory.setItem(10, toggleRandomItem);
 
-        ItemStack restartWorldsItem = createMenuItem(config, config.getString("language") + ".menu.restart_world", "");
+        String restartStatus = getEventWorldStatus(plugin);
+        ItemStack restartWorldsItem = createMenuItem(config, config.getString("language") + ".menu.restart_world", restartStatus);
         inventory.setItem(12, restartWorldsItem);
 
         ItemStack toggleCompassItem = createMenuItem(config, config.getString("language") + ".menu.toggle_compass", compassStatus);
@@ -154,7 +163,61 @@ public class GameManager {
         ItemStack configButton = createMenuItem(config, config.getString("language") + ".menu.setconf", "");
         inventory.setItem(16, configButton);
 
+        ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta fm = filler.getItemMeta();
+        if (fm != null) {
+            fm.setDisplayName(" ");
+            filler.setItemMeta(fm);
+        }
+        for (int i = 0; i < inventory.getSize(); i++) {
+            if (inventory.getItem(i) == null) {
+                inventory.setItem(i, filler);
+            }
+        }
+
         player.openInventory(inventory);
+    }
+
+    public static void updateEventWorldStatusInOpenMenus(HunterVSSpeedrunnerPlugin plugin) {
+        FileConfiguration config = plugin.getConfig();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getOpenInventory() == null) continue;
+            Inventory top = p.getOpenInventory().getTopInventory();
+            String title = ChatColor.stripColor(p.getOpenInventory().getTitle());
+            if (!"Select a Team".equals(title)) continue;
+
+            String status = getEventWorldStatus(plugin);
+            ItemStack restartWorldsItem = createMenuItem(config, config.getString("language") + ".menu.restart_world", status);
+            if (restartWorldsItem != null) {
+                top.setItem(12, restartWorldsItem);
+            }
+        }
+    }
+
+    private static String getEventWorldStatus(HunterVSSpeedrunnerPlugin plugin) {
+        FileConfiguration config = plugin.getConfig();
+        String eventWorldName = config.getString("event.worldName", "Event");
+
+
+        if (plugin.isWorldRegenerating()) {
+            int dots = plugin.getWorldRegenDots() % 3;
+            String suffix = dots == 0 ? "." : dots == 1 ? ".." : "...";
+            return ChatColor.YELLOW + " " + suffix;
+            }
+
+        File worldContainer = Bukkit.getWorldContainer();
+        File worldFolder = new File(worldContainer, eventWorldName);
+        World world = Bukkit.getWorld(eventWorldName);
+
+        if (!worldFolder.exists() && world == null) {
+            return ChatColor.RED + " ✖";
+        }
+
+        if (world != null) {
+            return ChatColor.GREEN + " ✔";
+        }
+
+        return ChatColor.YELLOW + " ✔";
     }
 
     private static ItemStack createTeamMenuItem(FileConfiguration config, String path, List<Player> players) {
@@ -514,15 +577,17 @@ public class GameManager {
             hunterTeleportTask = null;
         }
 
-        lifeManager.resetPlayers();
-
-        if (locatorBarWasEnabled) {
-            try {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar true");
-            } catch (Exception e) {
-                plugin.getLogger().warning("Could not restore locatorBar gamerule: " + e.getMessage());
-            }
+        if (locatorBarTask != null && !locatorBarTask.isCancelled()) {
+            locatorBarTask.cancel();
+            locatorBarTask = null;
         }
+        try {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule locatorBar true");
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not restore locatorBar gamerule: " + e.getMessage());
+        }
+
+        lifeManager.resetPlayers();
         
         teleportPlayersToDefaultWorld(plugin);
 
@@ -602,7 +667,6 @@ public class GameManager {
     private static String getPluginVersion(HunterVSSpeedrunnerPlugin plugin) {
         String version = plugin.getConfig().getString("plugin_version", null);
         if (version == null || version.isEmpty()) {
-            // Fallback to plugin description version if not set in config
             version = plugin.getDescription().getVersion();
         }
         return version;

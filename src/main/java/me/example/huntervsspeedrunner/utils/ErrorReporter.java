@@ -74,7 +74,7 @@ public class ErrorReporter {
 
         sb.append("**Полный стек вызовов:**\n");
         StackTraceElement[] stackTrace = throwable.getStackTrace();
-        int maxLines = Math.min(stackTrace.length, 10); // Уменьшили до 10 строк
+        int maxLines = Math.min(stackTrace.length, 10);
         for (int i = 0; i < maxLines; i++) {
             sb.append("```").append(stackTrace[i].toString()).append("```\n");
         }
@@ -273,7 +273,6 @@ public class ErrorReporter {
     private String getPluginVersion() {
         String version = plugin.getConfig().getString("plugin_version", null);
         if (version == null || version.isEmpty()) {
-            // Fallback to plugin description version if not set in config
             version = plugin.getDescription().getVersion();
         }
         return version;
